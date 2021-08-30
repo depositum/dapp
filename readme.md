@@ -1,9 +1,18 @@
 <div align="center">
-  <h1><code>near-rust-intro</code></h1>
+  <h1><code>Novum Depositum at MetaBUIDL 2021</code></h1>
   <p>
-    <strong><a href="https://docs.near.org/docs/tutorials/contracts/intro-to-rust">An Introduction to Rust Smart Contracts</strong>
+    <strong>WiP TBD</strong>
   </p>
 </div>
+
+## Local environment
+
+```shell
+yarn install
+yarn setup
+source util/near-shortcut.sh
+near-local send alice.local bob.local 1.42
+```
 
 ## Develop
 

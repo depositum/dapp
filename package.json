@@ -1,0 +1,19 @@
+{
+  "name": "metabuidl-2021-novum-depositum",
+  "version": "1.0.0-beta.0",
+  "repository": "git@github.com:InfinityHackathon/metabuidl-2021-novum-depositum.git",
+  "license": "UNLICENSED",
+  "scripts": {
+    "setup-near": "ts-node util/setup",
+    "setup": "yarn up && yarn setup-near",
+    "up": "yarn down && docker-compose up --detach",
+    "down": "docker-compose down --volumes"
+  },
+  "devDependencies": {
+    "@4ire-labs/near-sdk": "1.0.0-beta.8",
+    "dotenv": "^10.0.0",
+    "near-cli": "^2.1.1",
+    "ts-node": "^10.2.1",
+    "typescript": "^4.4.2"
+  }
+}
