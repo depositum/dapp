@@ -4,6 +4,8 @@
   "repository": "git@github.com:InfinityHackathon/metabuidl-2021-novum-depositum.git",
   "license": "UNLICENSED",
   "scripts": {
+    "setup-env-1": "ts-node util/setup-env-s1",
+    "setup-env-2": "ts-node util/setup-env-s2",
     "setup-near": "ts-node util/setup",
     "setup": "yarn up && yarn setup-near",
     "up": "yarn down && docker-compose up --detach",

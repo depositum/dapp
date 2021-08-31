@@ -12,6 +12,11 @@ yarn install
 yarn setup
 source util/near-shortcut.sh
 near-local send alice.local bob.local 1.42
+NEAR_ENV=local npx near --keyPath <(local-key bob.local) call  ref-finance.local storage_deposit '{"account_id": "bob.local", "registration_only": false}' --accountId bob.local --amount 0.1
+NEAR_ENV=local npx near --keyPath <(local-key bob.local) call  ref-finance.local storage_deposit '{"account_id": "alice.local", "registration_only": false}' --accountId bob.local --amount 0.1
+
+
+NEAR_ENV=local npx near --keyPath <(local-key bob.local) call usdt.local ft_transfer_call "{\"receiver_id\": \"ref-finance.local\", \"amount\": \"1000000000000\", \"msg\": \"\"}" --accountId bob.local --amount 0.000000000000000000000001
 ```
 
 ## Develop
