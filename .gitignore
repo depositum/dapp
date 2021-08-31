@@ -2,3 +2,5 @@
 /out
 /neardev
 .secrets
+node_modules
+testnet.env
