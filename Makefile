@@ -17,7 +17,7 @@ audit_fix:
 audit:
 	cargo audit
 
-test_contract_integration: build_in_docker
+test_contract_integration: build
 	cargo test --lib simulator
 
 test_contract_unit:
