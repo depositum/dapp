@@ -1,6 +1,24 @@
 version: "3.9"
 services:
-
+  near-helper-db:
+    image: nearprotocol/contract-helper-db
+    ports:
+      - 5432:5432
+  near-helper:
+    image: nearprotocol/contract-helper-app
+    environment:
+      - NODE_URL=http://near:3030
+      - INDEXER_DB_CONNECTION=postgres://indexer:indexer@near-helper-db/indexer
+      - HELPER_DB_USERNAME=helper
+      - HELPER_DB_PASSWORDS=helper
+      - HELPER_DB_NAME=accounts_development
+      - HELPER_DB_HOST=near-helper-db
+      - FUNDED_ACCOUNT_CREATOR_KEY={"account_id":"local","public_key":"ed25519:7PGseFbWxvYVgZ89K1uTJKYoKetWs7BJtbyXDzfbAcqX","secret_key":"ed25519:3D4YudUQRE39Lc4JHghuB5WM8kbgDDa34mnrEP5DdTApVH81af7e2dWgNPEaiQfdJnZq1CNPp5im4Rg5b733oiMP"}
+    depends_on:
+      - near
+      - near-helper-db
+    ports:
+      - "127.0.0.1:3000:3000"
   near:
     image: nearprotocol/nearup:1.2.0
     command: run localnet --verbose

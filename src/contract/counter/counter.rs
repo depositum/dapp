@@ -13,22 +13,19 @@ use near_sdk::borsh::BorshDeserialize;
 use near_sdk::borsh::BorshSerialize;
 use near_sdk::env;
 use near_sdk::near_bindgen;
-use near_sdk::setup_alloc;
-
-setup_alloc!();
 
 /// Add the following attributes
 /// to prepare your code for serialization and invocation on the blockchain
 /// More built-in Rust attributes here: https://doc.rust-lang.org/reference/attributes.html#built-in-attributes-index
 #[near_bindgen]
 #[derive(Default, BorshDeserialize, BorshSerialize)]
-pub struct Counter {
+pub struct Contract {
     // See more data types at https://doc.rust-lang.org/book/ch03-02-data-types.html
     val: i8, // i8 is signed. unsigned integers are also available: u8, u16, u32, u64, u128
 }
 
 #[near_bindgen]
-impl Counter {
+impl Contract {
     /// Returns 8-bit signed integer of the counter value.
     ///
     /// This must match the type from our struct's 'val' defined above.
@@ -58,7 +55,7 @@ impl Counter {
         // real smart contracts will want to have safety checks
         self.val += 1;
         let log_message = format!("Increased number to {}", self.val);
-        env::log(log_message.as_bytes());
+        env::log_str(&log_message);
         after_counter_change();
     }
 
@@ -75,7 +72,7 @@ impl Counter {
         // real smart contracts will want to have safety checks
         self.val -= 1;
         let log_message = format!("Decreased number to {}", self.val);
-        env::log(log_message.as_bytes());
+        env::log_str(&log_message);
         after_counter_change();
     }
 
@@ -83,7 +80,7 @@ impl Counter {
     pub fn reset(&mut self) {
         self.val = 0;
         // Another way to log is to cast a string into bytes, hence "b" below:
-        env::log(b"Reset counter to zero");
+        env::log_str("Reset counter to zero");
     }
 }
 
@@ -93,7 +90,7 @@ impl Counter {
 /// while this function cannot be invoked directly on the blockchain, it can be called from an invoked function
 fn after_counter_change() {
     // show helpful warning that i8 (8-bit signed integer) will overflow above 127 or below -128
-    env::log("Make sure you don't overflow, my friend.".as_bytes());
+    env::log_str("Make sure you don't overflow, my friend.");
 }
 
 /*
@@ -103,53 +100,7 @@ fn after_counter_change() {
  * Note: 'rust-counter-tutorial' comes from cargo.toml's 'name' key
  */
 
-// use the attribute below for unit tests
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use near_sdk::test_utils::accounts;
-    use near_sdk::test_utils::VMContextBuilder;
-    use near_sdk::testing_env;
-    use near_sdk::MockedBlockchain;
-
-    // part of writing unit tests is setting up a mock context
-    fn context() -> VMContextBuilder {
-        let mut builder = VMContextBuilder::new();
-        builder.signer_account_id(accounts(0));
-        builder
-    }
-
-    // mark individual unit tests with #[test] for them to be registered and fired
-    #[test]
-    fn increment() {
-        // set up the mock context into the testing environment
-        testing_env!(context().build());
-        // instantiate a contract variable with the counter at zero
-        let mut contract = Counter::default();
-        contract.increment();
-        println!("Value after increment: {}", contract.get_num());
-        // confirm that we received 1 when calling get_num
-        assert_eq!(1, contract.get_num());
-    }
-
-    #[test]
-    fn decrement() {
-        testing_env!(context().build());
-        let mut contract = Counter::default();
-        contract.decrement();
-        println!("Value after decrement: {}", contract.get_num());
-        // confirm that we received -1 when calling get_num
-        assert_eq!(-1, contract.get_num());
-    }
-
-    #[test]
-    fn increment_and_reset() {
-        testing_env!(context().build());
-        let mut contract = Counter::default();
-        contract.increment();
-        contract.reset();
-        println!("Value after reset: {}", contract.get_num());
-        // confirm that we received -1 when calling get_num
-        assert_eq!(0, contract.get_num());
-    }
-}
+#[cfg(all(test, not(target_arch = "wasm32")))]
+mod simulator;
+#[cfg(all(test, not(target_arch = "wasm32")))]
+mod unit;

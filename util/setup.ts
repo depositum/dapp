@@ -7,7 +7,7 @@ async function main() {
     let code = await near.fetchContract('near', 'mainnet')
     let sender = near.parseAccountNetwork('node0')
     let account = near.custodianAccount('local')
-    let result = await near.deployContract(account, code, {amount: '1000000', sender})
+    let result = await near.deployContract(account, code, {amount: '21000000', sender})
     console.log('[SETUP] Created helper account:', {
         accountId: result.account.accountId,
         transactionId: result.outcome.transactionId,

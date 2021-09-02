@@ -1,6 +1,8 @@
-clean:
+clean_build:
+	rm -fr build
+
+clean: clean_build
 	cargo clean
-	rm -fr out
 
 lint:
 	cargo fmt --all -- --check
@@ -9,24 +11,24 @@ lint:
 fmt:
 	cargo fmt
 
-audit-fix:
+audit_fix:
 	cargo audit fix
 
 audit:
 	cargo audit
 
-test-contract-integration: out/main.wasm
-	cargo test --test integration
+test_contract_integration: build_in_docker
+	cargo test --lib simulator
 
-test-contract-unit:
-	cargo test --lib
+test_contract_unit:
+	cargo test --lib unit
 
-test-contract:\
-test-contract-integration \
-test-contract-unit
+test_contract:\
+test_contract_integration \
+test_contract_unit
 
 test:\
-test-contract
+test_contract
 
 qa:\
 lint \
@@ -46,12 +48,26 @@ rustup:
 check:
 	cargo check
 
-out/main.wasm:
-	cargo build --target wasm32-unknown-unknown --release
-	@mkdir -p out
-	@cp target/wasm32-unknown-unknown/release/intro.wasm out/main.wasm
-	@du -b out/main.wasm
-	@sha256sum out/main.wasm
+build:
+	bash src/contract/build.sh
+build_in_docker:
+	bash src/contract/build_in_docker.sh
+rebuild: clean_build build_in_docker
+	bash src/contract/build_docker.sh
 
-build:\
-out/main.wasm
+YOCTO=0.000000000000000000000001
+
+CONTRACT=$(shell cat neardev/dev-account)
+local_deploy_delete:
+	NEAR_ENV=local near delete ${CONTRACT} local
+	rm -fr neardev
+	touch local-deploy-delete
+local_deploy_new: local_deploy_delete local_deploy
+	NEAR_ENV=local near --account_id local call ${CONTRACT} new
+local_deploy: rebuild
+	NEAR_ENV=local near --masterAccount local dev-deploy build/depositum-minified.wasm
+	rm -fr local-deploy-delete
+local_balance_of:
+	NEAR_ENV=local near --account_id local view ${CONTRACT} balance_of '{"account_id": "local"}'
+local_deposit_usd:
+	NEAR_ENV=local near --account_id local call ${CONTRACT} deposit '{"coin":"usd", "amount":"1"}' --amount ${YOCTO}

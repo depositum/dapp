@@ -52,4 +52,4 @@ jobs:
           toolchain: stable
           profile: minimal
           override: true
-      - run: make test-contract
+      - run: make test_contract

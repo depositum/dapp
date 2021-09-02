@@ -7,6 +7,7 @@ async function main() {
     console.log('[SETUP] IN PROGRESS')
     const sender = near.parseAccountNetwork('local')
     const financeContract = near.custodianAccount(near.accountIdBySlug('ref-finance'))
+    await near.isExistAccount()
     const finance = await near.fetchContract('v2.ref-finance.near', 'mainnet')
     const result = await near.deployContract(financeContract, finance, {
             init: {
@@ -45,6 +46,10 @@ async function main() {
         methodName: 'mint',
         args: {account_id: near.accountIdBySlug('bob'), amount: '10000000000000000000',}
     })
+    await usdToken.callRaw({
+        methodName: 'mint',
+        args: {account_id: near.accountIdBySlug('ref-finance'), amount: '10000000000000000000',}
+    })
 
     const wnearContract = near.custodianAccount(near.accountIdBySlug('wnear'))
     const wnearTokenResult = await near.deployContract(wnearContract, ftTokenCode, {
@@ -65,6 +70,11 @@ async function main() {
         methodName: 'mint',
         args: {account_id: near.accountIdBySlug('bob'), amount: '10000000000000000000',}
     })
+    await wnearToken.callRaw({
+        methodName: 'mint',
+        args: {account_id: near.accountIdBySlug('ref-finance'), amount: '10000000000000000000',}
+    })
 }
 
 main().catch(console.error)
+
