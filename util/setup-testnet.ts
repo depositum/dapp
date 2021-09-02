@@ -29,24 +29,23 @@ async function prepareAccounts() {
 
     if (!(await near.isExistAccount(bobAcc))) {
         const tx = await near.createAccount(sender, bobAcc, '10')
-        console.log('[SETUP] Created account:', { accountId: aliceAcc.accountId, transactionId: tx.transactionId, });
+        console.log('[SETUP] Created account:', { accountId: bobAcc.accountId, transactionId: tx.transactionId, });
     }
 
     if (!(await near.isExistAccount(refFinanceAcc))) {
         const tx = await near.createAccount(sender, refFinanceAcc, '10')
-        console.log('[SETUP] Created account:', { accountId: aliceAcc.accountId, transactionId: tx.transactionId, });
+        console.log('[SETUP] Created account:', { accountId: refFinanceAcc.accountId, transactionId: tx.transactionId, });
     }
 
     if (!(await near.isExistAccount(usdcAcc))) {
         const tx = await near.createAccount(sender, usdcAcc, '10')
-        console.log('[SETUP] Created account:', { accountId: aliceAcc.accountId, transactionId: tx.transactionId, });
+        console.log('[SETUP] Created account:', { accountId: usdcAcc.accountId, transactionId: tx.transactionId, });
     }
 
     if (!(await near.isExistAccount(wnearAcc))) {
         const tx = await near.createAccount(sender, wnearAcc, '10')
-        console.log('[SETUP] Created account:', { accountId: aliceAcc.accountId, transactionId: tx.transactionId, });
+        console.log('[SETUP] Created account:', { accountId: wnearAcc.accountId, transactionId: tx.transactionId, });
     }
-
 }
 
 async function createTokens() {
@@ -83,7 +82,7 @@ async function createTokens() {
 
 }
 
-async function deleteAccount(accounts: string[]) {
+async function deleteAccounts(accounts: string[]) {
     for (const accName of accounts) {
         const account = near.custodianAccount(accName);
         await near.deleteAccount(account, sender);
@@ -175,7 +174,7 @@ async function attachDeposit() {
         const acc = near.custodianAccount(accId);
 
         const refContract = await near.Contract.connect(near.Contract, REF_FINANCE_ACC_NAME, acc);
-    
+
         const res = await refContract.call<any>({
             methodName: 'storage_deposit',
             args: { account_id: accId, registration_only: false },
@@ -185,47 +184,103 @@ async function attachDeposit() {
     }
 }
 
-async function registerTokens() {
+async function whitelistTokensInRef() {
     const acc = near.custodianAccount(ALICE_ACC_NAME);
     const refContract = await near.Contract.connect(near.Contract, REF_FINANCE_ACC_NAME, acc);
 
     const res = await refContract.callRaw<any>({
-        methodName: 'register_tokens',
-        args: { token_ids: [USD_TOKEN_ACC_NAME, WNEAR_TOKEN_ACC_NAME]},
+        methodName: 'extend_whitelisted_tokens',
+        args: { tokens: [USD_TOKEN_ACC_NAME, WNEAR_TOKEN_ACC_NAME] },
         attachedDeposit: '0.000000000000000000000001',
     });
     console.log(`register_tokens response`, res);
 }
 
-async function transferTokensToRefContract() {    
+async function addPool() {
+    const acc = near.custodianAccount(ALICE_ACC_NAME);
+    const refContract = await near.Contract.connect(near.Contract, REF_FINANCE_ACC_NAME, acc);
+
+    const res = await refContract.callRaw<any>({
+        methodName: 'add_simple_pool',
+        args: { tokens: [USD_TOKEN_ACC_NAME, WNEAR_TOKEN_ACC_NAME], fee: 25 },
+        attachedDeposit: '0.1',
+    });
+    console.log(`a add_simple_pool`, res);
+}
+
+async function addLiquidityToPool() {
+    // near call $CONTRACT_ID add_liquidity '{"pool_id": 0, "amounts": ["10000", "10000"]}' --accountId $USER_ID --amount 0.000000000000000000000001
+    const acc = near.custodianAccount(BOB_ACC_NAME);
+    const refContract = await near.Contract.connect(near.Contract, REF_FINANCE_ACC_NAME, acc);
+
+    const res = await refContract.callRaw<any>({
+        methodName: 'add_liquidity',
+        args: {
+            pool_id: 0,
+            amounts: ['100000', '100000']
+        },
+        attachedDeposit: '0.1',
+    });
+    console.log(`add_liquidity response`, res);
+}
+
+async function swap(account: string) {
+    const acc = near.custodianAccount(account);
+    const refContract = await near.Contract.connect(near.Contract, REF_FINANCE_ACC_NAME, acc);
+
+    const res = await refContract.callRaw<any>({
+        methodName: 'swap',
+        args: {
+            actions: [{
+                pool_id: 0,
+                token_in: WNEAR_TOKEN_ACC_NAME,
+                amount_in: '1000',
+                token_out: USD_TOKEN_ACC_NAME,
+                min_amount_out: '1'
+            }],
+        },
+        attachedDeposit: '0.000000000000000000000001',
+    });
+
+    console.log(`swap response`, res);
+}
+
+async function withdraw(account: string, token: string, amount: string) {
+    const acc = near.custodianAccount(account);
+    const refContract = await near.Contract.connect(near.Contract, REF_FINANCE_ACC_NAME, acc);
+
+    const res = await refContract.callRaw<any>({
+        methodName: 'withdraw',
+        args: {
+            token_id: token,
+            amount,
+        },
+        attachedDeposit: '0.000000000000000000000001',
+    });
+
+    console.log(`withdraw response`, res);
+}
+
+async function transferTokensToRefContract() {
     for (const tokenAccId of [USD_TOKEN_ACC_NAME, WNEAR_TOKEN_ACC_NAME]) {
         for (const userAccId of [ALICE_ACC_NAME, BOB_ACC_NAME]) {
             const acc = near.custodianAccount(userAccId);
             const tokenContract = await near.Contract.connect(near.Contract, tokenAccId, acc);
             const res = await tokenContract.call<any>({
                 methodName: 'ft_transfer_call',
-                args: { 
-                    receiver_id: REF_FINANCE_ACC_NAME, 
+                args: {
+                    receiver_id: REF_FINANCE_ACC_NAME,
                     amount: '10000000000',
                     msg: ''
                 },
                 attachedDeposit: '0.000000000000000000000001',
             });
             console.log(`${tokenAccId} ft_transfer_call for ${userAccId}`, res);
-        }   
+        }
     }
 }
 
-async function main() {
-    console.log('[SETUP] IN PROGRESS');
-    // await deleteAccount([USDC_TOKEN_ACC_NAME, WNEAR_TOKEN_ACC_NAME]);
-
-    // await prepareAccounts();
-    // await createRefFinanceContract();
-    // await createTokens();
-    // await mintTokens();
-    await registerTokens();
-
+async function printPools() {
     const aliceAcc = near.custodianAccount(ALICE_ACC_NAME);
     const refContract = await near.Contract.connect(near.Contract, REF_FINANCE_ACC_NAME, aliceAcc);
 
@@ -235,12 +290,52 @@ async function main() {
     });
 
     console.log('pools', pools);
+}
 
-    // 1)
-    // await attachDeposit();
-    
-    // 2)
-    // await transferTokensToRefContract();
+async function printBlance(account: string) {
+    const acc = near.custodianAccount(account);
+    const refContract = await near.Contract.connect(near.Contract, REF_FINANCE_ACC_NAME, acc);
+
+    const res = await refContract.call<any>({
+        methodName: 'get_deposits',
+        args: { account_id: account }
+    });
+
+    console.log(`${account} balance: ${JSON.stringify(res, null, 2)}`);
+}
+
+async function main() {
+    console.log('[SETUP] IN PROGRESS');
+    const init = async () => {
+        await prepareAccounts();
+        await createRefFinanceContract();
+        await createTokens();
+        await mintTokens();
+        await whitelistTokensInRef();
+    };
+
+    // await init();
+
+    const accountActions = async () => {
+        // 1)
+        await attachDeposit();
+        // 2)
+        await transferTokensToRefContract();
+        // 3) add pool
+        await addPool();
+        // 4) add liquidity 
+        await addLiquidityToPool();
+    };
+
+    // await accountActions();
+
+
+    await swap(BOB_ACC_NAME);
+    await withdraw(BOB_ACC_NAME, USD_TOKEN_ACC_NAME, '1000');
+
+    await printPools();
+    await printBlance(BOB_ACC_NAME);
+    await printBlance(ALICE_ACC_NAME);
 }
 
 main().catch(console.error)
