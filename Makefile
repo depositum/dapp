@@ -49,24 +49,19 @@ check:
 	cargo check
 
 build:
-	bash src/contract/build.sh
-build_in_docker:
 	bash src/contract/build_in_docker.sh
-rebuild: clean_build build_in_docker
-	bash src/contract/build_docker.sh
+rebuild: clean_build build
 
 YOCTO=0.000000000000000000000001
 
 CONTRACT=$(shell cat neardev/dev-account)
 local_deploy_delete:
-	NEAR_ENV=local near delete ${CONTRACT} local
+	NEAR_ENV=local near delete ${CONTRACT} local || exit 0
 	rm -fr neardev
-	touch local-deploy-delete
 local_deploy_new: local_deploy_delete local_deploy
 	NEAR_ENV=local near --account_id local call ${CONTRACT} new
 local_deploy: rebuild
 	NEAR_ENV=local near --masterAccount local dev-deploy build/depositum-minified.wasm
-	rm -fr local-deploy-delete
 local_balance_of:
 	NEAR_ENV=local near --account_id local view ${CONTRACT} balance_of '{"account_id": "local"}'
 local_deposit_usd:
