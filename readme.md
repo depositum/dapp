@@ -19,6 +19,12 @@ NEAR_ENV=local npx near --keyPath <(local-key bob.local) call  ref-finance.local
 NEAR_ENV=local npx near --keyPath <(local-key bob.local) call usdt.local ft_transfer_call "{\"receiver_id\": \"ref-finance.local\", \"amount\": \"1000000000000\", \"msg\": \"\"}" --accountId bob.local --amount 0.000000000000000000000001
 ```
 
+## Util
+
+```shell
+NEAR_ENV=testnet bash util/simple_token_deploy.sh
+NEAR_ENV=testnet bash util/simple_token_delete.sh
+```
 ## Develop
 
 ```shell

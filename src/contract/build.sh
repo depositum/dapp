@@ -45,5 +45,5 @@ build() {
 cd "$ROOT_PATH"
 build counter
 build depositum
-build test_token
+build simple_token
 chown "$HOST_OWNER" -R "$ROOT_PATH" # FIXME setup not root user in docker
