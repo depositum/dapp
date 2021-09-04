@@ -13,7 +13,7 @@ minify() {
   fileName=$(basename -- "${filePath}")
   dirPath=$(dirname -- "${filePath}")
   tmpPath="${dirPath}/temp-${fileName}"
-  outFileName="${fileName%.*}-minified.${fileName##*.}"
+  outFileName="${fileName%.*}.${fileName##*.}"
   outPath="${dirPath}/${outFileName}"
   wasm-snip \
     --snip-rust-fmt-code \
@@ -45,4 +45,5 @@ build() {
 cd "$ROOT_PATH"
 build counter
 build depositum
+build test_token
 chown "$HOST_OWNER" -R "$ROOT_PATH" # FIXME setup not root user in docker

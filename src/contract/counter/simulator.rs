@@ -64,7 +64,7 @@ fn increment() {
 }
 
 near_sdk_sim::lazy_static_include::lazy_static_include_bytes! {
-    CONTRACT_COUNTER => "../../../build/counter-minified.wasm",
+    CONTRACT_COUNTER => "../../../build/counter.wasm",
 }
 
 use near_sdk::Gas;
