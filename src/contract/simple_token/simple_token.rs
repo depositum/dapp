@@ -20,7 +20,7 @@ use near_sdk::PromiseOrValue;
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
-pub struct Contract {
+pub struct SimpleToken {
     token: FungibleToken,
     metadata: LazyOption<FungibleTokenMetadata>,
 }
@@ -32,7 +32,7 @@ enum StorageKey {
 }
 
 #[near_bindgen]
-impl Contract {
+impl SimpleToken {
     #[init]
     pub fn new(symbol: String, decimals: Option<u8>) -> Self {
         require!(!env::state_exists(), "Already initialized");
@@ -86,11 +86,11 @@ impl Contract {
     }
 }
 
-near_contract_standards::impl_fungible_token_core!(Contract, token, on_tokens_burned);
-near_contract_standards::impl_fungible_token_storage!(Contract, token, on_account_closed);
+near_contract_standards::impl_fungible_token_core!(SimpleToken, token, on_tokens_burned);
+near_contract_standards::impl_fungible_token_storage!(SimpleToken, token, on_account_closed);
 
 #[near_bindgen]
-impl FungibleTokenMetadataProvider for Contract {
+impl FungibleTokenMetadataProvider for SimpleToken {
     fn ft_metadata(&self) -> FungibleTokenMetadata {
         self.metadata.get().unwrap()
     }
@@ -122,7 +122,7 @@ mod unit {
         let mut context = get_context(accounts(1));
         context.attached_deposit(SUPPLY + STORAGE_COVER);
         testing_env!(context.build());
-        let mut contract = Contract::new("T".to_string(), None);
+        let mut contract = SimpleToken::new("T".to_string(), None);
         contract.ft_mint();
         testing_env!(context.is_view(true).build());
         assert_eq!(contract.ft_total_supply().0, SUPPLY);
@@ -134,7 +134,7 @@ mod unit {
     fn test_default() {
         let context = get_context(accounts(1));
         testing_env!(context.build());
-        let _contract = Contract::default();
+        let _contract = SimpleToken::default();
     }
 
     #[test]
@@ -142,7 +142,7 @@ mod unit {
         let mut context = get_context(accounts(2));
         context.attached_deposit(SUPPLY + STORAGE_COVER);
         testing_env!(context.build());
-        let mut contract = Contract::new("T".to_string(), None);
+        let mut contract = SimpleToken::new("T".to_string(), None);
         contract.ft_mint();
         testing_env!(context
             .storage_usage(env::storage_usage())

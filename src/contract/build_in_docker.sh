@@ -17,4 +17,4 @@ docker run \
   --env HOST_OWNER="$(id -u):$(id -g)" \
   --workdir /code \
   --rm contract-builder \
-  src/contract/build.sh
+  "${@:-src/contract/build.sh}"

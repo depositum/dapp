@@ -26,10 +26,6 @@ async function main() {
         accountId: account.accountId,
         transactionId: trx.transactionId,
     })
-    console.log('[SETUP] Created NEP4 account:', {
-        accountId: result.account.accountId,
-        transactionId: result.outcome.transactionId,
-    })
     console.log('[SETUP] DONE')
 }
 

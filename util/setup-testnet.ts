@@ -323,7 +323,7 @@ async function main() {
         await transferTokensToRefContract();
         // 3) add pool
         await addPool();
-        // 4) add liquidity 
+        // 4) add liquidity
         await addLiquidityToPool();
     };
 
@@ -331,7 +331,7 @@ async function main() {
 
 
     await swap(BOB_ACC_NAME);
-    await withdraw(BOB_ACC_NAME, USD_TOKEN_ACC_NAME, '1000');
+    // await withdraw(BOB_ACC_NAME, USD_TOKEN_ACC_NAME, '1000');
 
     await printPools();
     await printBlance(BOB_ACC_NAME);

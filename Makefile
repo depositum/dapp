@@ -1,3 +1,10 @@
+SHELL=bash
+YOCTO=0.000000000000000000000001
+-include neardev/dev-account.env
+-include .env
+in_docker_%:
+	bash src/contract/build_in_docker.sh make $*
+
 clean_build:
 	rm -fr build
 
@@ -47,22 +54,22 @@ rustup:
 
 check:
 	cargo check
-
 build:
-	bash src/contract/build_in_docker.sh
+	bash src/contract/build.sh
 rebuild: clean_build build
-
-YOCTO=0.000000000000000000000001
-
-CONTRACT=$(shell cat neardev/dev-account)
-local_deploy_delete:
-	NEAR_ENV=local near delete ${CONTRACT} local || exit 0
+near_deploy_delete:
+	near delete ${CONTRACT_NAME} ${NEAR_DEV_ACCOUNT} || exit 0
 	rm -fr neardev
-local_deploy_new: local_deploy_delete local_deploy
-	NEAR_ENV=local near --account_id local call ${CONTRACT} new
-local_deploy: rebuild
-	NEAR_ENV=local near --masterAccount local dev-deploy build/depositum-minified.wasm
-local_balance_of:
-	NEAR_ENV=local near --account_id local view ${CONTRACT} balance_of '{"account_id": "local"}'
+near_deploy_new: near_deploy_delete near_deploy
+	NEAR_ENV=${NEAR_ENV} near --accountId ${NEAR_DEV_ACCOUNT} call ${CONTRACT_NAME} new
+near_deploy:
+	NEAR_ENV=${NEAR_ENV} near --masterAccount ${NEAR_DEV_ACCOUNT} dev-deploy build/depositum.wasm
+near_balance_of:
+	NEAR_ENV=${NEAR_ENV} near --accountId ${NEAR_DEV_ACCOUNT} view ${CONTRACT_NAME} balance_of "{\"account_id\": \"${NEAR_DEV_ACCOUNT}\"}"
 local_deposit_usd:
-	NEAR_ENV=local near --account_id local call ${CONTRACT} deposit '{"coin":"usd", "amount":"1"}' --amount ${YOCTO}
+	NEAR_ENV=${NEAR_ENV} near --accountId ${NEAR_DEV_ACCOUNT} call ${CONTRACT_NAME} deposit '{"coin":"usd", "amount":"1"}' --amount ${YOCTO}
+#	near --accountId $NEAR_DEV_ACCOUNT call ${CONTRACT_NAME} deposit '{"coin":"dev-1630760424867-24569744671419", "amount":"1"}' --amount ${YOCTO}
+#    near --accountId "$CONTRACT_NAME" call dev-1630760424867-24569744671419 ft_mint --amount 10.00125
+#    near --accountId "$NEAR_DEV_ACCOUNT" call dev-1630760424867-24569744671419 ft_mint --amount 10.00125
+#    near view dev-1630760424867-24569744671419 ft_balance_of "$(printf '{"account_id": "%s"}' ${CONTRACT_NAME})"
+#    near view dev-1630760424867-24569744671419 ft_balance_of "$(printf '{"account_id": "%s"}' $NEAR_DEV_ACCOUNT)"

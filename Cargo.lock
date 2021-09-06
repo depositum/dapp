@@ -752,6 +752,7 @@ dependencies = [
  "near-contract-standards",
  "near-sdk",
  "near-sdk-sim",
+ "simple_token",
 ]
 
 [[package]]

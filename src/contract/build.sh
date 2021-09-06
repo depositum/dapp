@@ -3,12 +3,15 @@
 set -o errexit
 
 ROOT_PATH=$(cd "$( dirname "${BASH_SOURCE[0]}" )" && cd ../../ && pwd)
-HOST_OWNER=${HOST_OWNER:-"1000:1000"}
 
 # cargo install wasm-snip wasm-gc
 # apt-get install -y binaryen wabt
 # https://github.com/near/near-sdk-rs/tree/master/minifier
 minify() {
+  if [ "$(command -v wasm-snip wasm-gc wasm-strip wasm-opt | wc -l)" != 4 ]; then
+    echo "Minifying skipped"
+    return
+  fi
   filePath="${1}"
   fileName=$(basename -- "${filePath}")
   dirPath=$(dirname -- "${filePath}")
@@ -35,15 +38,19 @@ build() {
   package="${1}"
   cargo build --package "${package}" --target wasm32-unknown-unknown --release
   mkdir -p build
+  path="build/${package}.wasm"
   cp target/wasm32-unknown-unknown/release/*.wasm build/
-  minify "build/${package}.wasm"
-  echo "Build size:"
-  du -b build/*"${package}"*
-  sha256sum build/*"${package}"*
+  echo "${path}"
+  minify "${path}"
+  printf "size: %s\n" "$(du -b "${path}" | cut -f1)"
+  printf "hash: %s\n" "$(sha256sum "${path}" | cut -d' ' -f1)"
 }
 
 cd "$ROOT_PATH"
 build counter
 build depositum
 build simple_token
-chown "$HOST_OWNER" -R "$ROOT_PATH" # FIXME setup not root user in docker
+
+# FIXME setup not root user in docker
+HOST_OWNER=${HOST_OWNER:-"$(id -u):$(id -g)"}
+chown "$HOST_OWNER" -R "$ROOT_PATH"
