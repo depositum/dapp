@@ -15,7 +15,7 @@ bench = false
 doc = false
 
 [dev-dependencies]
-near-sdk-sim = "4.0.0-pre.1"
+near-sdk-sim = "4.0.0-pre.2"
 simple_token = { path = "../simple_token" }
 
 [dependencies]
