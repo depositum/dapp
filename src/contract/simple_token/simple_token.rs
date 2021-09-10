@@ -86,8 +86,104 @@ impl SimpleToken {
     }
 }
 
-near_contract_standards::impl_fungible_token_core!(SimpleToken, token, on_tokens_burned);
-near_contract_standards::impl_fungible_token_storage!(SimpleToken, token, on_account_closed);
+use near_contract_standards::fungible_token::core::FungibleTokenCore;
+use near_contract_standards::fungible_token::resolver::FungibleTokenResolver;
+
+#[near_bindgen]
+impl FungibleTokenCore for SimpleToken {
+    #[payable]
+    fn ft_transfer(&mut self, receiver_id: AccountId, amount: U128, memo: Option<String>) {
+        log!("ft_transfer");
+        self.token.ft_transfer(receiver_id, amount, memo)
+    }
+
+    #[payable]
+    fn ft_transfer_call(
+        &mut self,
+        receiver_id: AccountId,
+        amount: U128,
+        memo: Option<String>,
+        msg: String,
+    ) -> PromiseOrValue<U128> {
+        log!("ft_transfer_call");
+        self.token.ft_transfer_call(receiver_id, amount, memo, msg)
+    }
+
+    fn ft_total_supply(&self) -> U128 {
+        log!("ft_total_supply");
+        self.token.ft_total_supply()
+    }
+
+    fn ft_balance_of(&self, account_id: AccountId) -> U128 {
+        log!("ft_balance_of");
+        self.token.ft_balance_of(account_id)
+    }
+}
+
+#[near_bindgen]
+impl FungibleTokenResolver for SimpleToken {
+    #[private]
+    fn ft_resolve_transfer(
+        &mut self,
+        sender_id: AccountId,
+        receiver_id: AccountId,
+        amount: U128,
+    ) -> U128 {
+        log!("ft_resolve_transfer");
+        let (used_amount, burned_amount) =
+            self.token
+                .internal_ft_resolve_transfer(&sender_id, receiver_id, amount);
+        if burned_amount > 0 {
+            self.on_tokens_burned(sender_id, burned_amount);
+        }
+        used_amount.into()
+    }
+}
+
+use near_contract_standards::storage_management::{
+    StorageBalance, StorageBalanceBounds, StorageManagement,
+};
+
+#[near_bindgen]
+impl StorageManagement for SimpleToken {
+    #[payable]
+    fn storage_deposit(
+        &mut self,
+        account_id: Option<AccountId>,
+        registration_only: Option<bool>,
+    ) -> StorageBalance {
+        log!("storage_deposit");
+        self.token.storage_deposit(account_id, registration_only)
+    }
+
+    #[payable]
+    fn storage_withdraw(&mut self, amount: Option<U128>) -> StorageBalance {
+        log!("storage_withdraw");
+        self.token.storage_withdraw(amount)
+    }
+
+    #[payable]
+    fn storage_unregister(&mut self, force: Option<bool>) -> bool {
+        log!("storage_unregister");
+        #[allow(unused_variables)]
+        if let Some((account_id, balance)) = self.token.internal_storage_unregister(force) {
+            self.on_account_closed(account_id, balance);
+            true
+        } else {
+            false
+        }
+    }
+
+    fn storage_balance_bounds(&self) -> StorageBalanceBounds {
+        log!("storage_balance_bounds");
+        self.token.storage_balance_bounds()
+    }
+
+    fn storage_balance_of(&self, account_id: AccountId) -> Option<StorageBalance> {
+        log!("storage_balance_of");
+        self.token.storage_balance_of(account_id)
+    }
+}
 
 #[near_bindgen]
 impl FungibleTokenMetadataProvider for SimpleToken {
