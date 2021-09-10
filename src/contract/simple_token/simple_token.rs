@@ -34,8 +34,9 @@ enum StorageKey {
 #[near_bindgen]
 impl SimpleToken {
     #[init]
-    pub fn new(symbol: String, decimals: Option<u8>) -> Self {
+    pub fn new(symbol: Option<String>, decimals: Option<u8>) -> Self {
         require!(!env::state_exists(), "Already initialized");
+        let symbol = symbol.unwrap_or("COIN".to_string());
         Self {
             token: FungibleToken::new(StorageKey::FungibleToken),
             metadata: LazyOption::new(
@@ -218,7 +219,7 @@ mod unit {
         let mut context = get_context(accounts(1));
         context.attached_deposit(SUPPLY + STORAGE_COVER);
         testing_env!(context.build());
-        let mut contract = SimpleToken::new("T".to_string(), None);
+        let mut contract = SimpleToken::new(None, None);
         contract.ft_mint();
         testing_env!(context.is_view(true).build());
         assert_eq!(contract.ft_total_supply().0, SUPPLY);
@@ -238,7 +239,7 @@ mod unit {
         let mut context = get_context(accounts(2));
         context.attached_deposit(SUPPLY + STORAGE_COVER);
         testing_env!(context.build());
-        let mut contract = SimpleToken::new("T".to_string(), None);
+        let mut contract = SimpleToken::new(None, None);
         contract.ft_mint();
         testing_env!(context
             .storage_usage(env::storage_usage())

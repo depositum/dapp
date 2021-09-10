@@ -34,41 +34,63 @@ make build
 make clean
 ```
 
-### Run CI local
+### QA
 
-Installation [act](https://github.com/nektos/act):
 ```shell
-brew install act
+make qa
 ```
 
-Setup env vars:
+## Deploy
+
 ```shell
-echo "GITHUB_TOKEN=%GITHUB_TOKEN%" | tee .secrets
+make rebuild
 ```
 
-Run
+### local
+
 ```shell
-act --help
+yarn setup
+source util/near-shortcut.sh
+near-local --masterAccount local create-account coin.local
+near-local --masterAccount coin.local deploy --accountId coin.local --initFunction new --initArgs '{}' --wasmFile build/simple_token.wasm
+near-local --masterAccount local create-account depositum.local
+```
+`.env`
+```ini
+NEAR_ENV=local
+NEAR_DEPOSITUM_ID=depositum.local
+NEAR_COIN_ID=coin.local
 ```
 
-## Deploy test
+### testnet
 
 ```shell
-make build
-near dev-deploy
-contractName=$(cat neardev/dev-account)
-near state $contractName
+near dev-deploy build/depositum.wasm && near delete $(cat neardev/dev-account) depositum.testnet && rm -rf neardev
+near --masterAccount depositum.testnet create-account alpha.depositum.testnet --initialBalance 50
+near --masterAccount depositum.testnet create-account sandbox.depositum.testnet --initialBalance 50
+near dev-deploy build/depositum.wasm && near delete $(cat neardev/dev-account) sandbox.depositum.testnet && rm -rf neardev
+near --masterAccount sandbox.depositum.testnet create-account coin.sandbox.depositum.testnet --initialBalance 50
+
+near --masterAccount coin.sandbox.depositum.testnet deploy --accountId coin.sandbox.depositum.testnet --initFunction new --initArgs '{}' --wasmFile build/simple_token.wasm
+```
+
+`.env`
+```ini
+NEAR_ENV=testnet
+NEAR_DEPOSITUM_ID=alpha.depositum.testnet
+NEAR_COIN_ID=coin.sandbox.depositum.testnet
+```
+
+### mainnet
+
+TBD
+
+### deploy
+
+```shell
+yarn deploy
 ```
 
 ## Usage
 
-```shell
-accountId=ilyar.testnet
-contractName=$(cat neardev/dev-account)
-near view $contractName get_num
-near call $contractName increment --accountId $accountId
-near view $contractName get_num
-near call $contractName decrement --accountId $accountId
-near view $contractName get_num
-near delete $contractName $accountId
-```
+TBD
