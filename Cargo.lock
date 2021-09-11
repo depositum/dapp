@@ -2272,6 +2272,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ref_farming_strategy"
+version = "1.0.0-beta.0"
+dependencies = [
+ "near-contract-standards",
+ "near-sdk",
+ "near-sdk-sim",
+]
+
+[[package]]
 name = "regalloc"
 version = "0.0.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"

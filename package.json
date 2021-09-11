@@ -11,7 +11,9 @@
     "setup-testnet": "npx ts-node util/setup-testnet",
     "setup": "yarn up && yarn setup-near",
     "up": "yarn down && docker-compose up --detach",
-    "down": "docker-compose down --volumes"
+    "down": "docker-compose down --volumes",
+
+    "build-ref-farming": "cargo build --package \"ref_farming_strategy\" --target wasm32-unknown-unknown --release"
   },
   "devDependencies": {
     "@4ire-labs/near-sdk": "1.0.0-beta.8",
