@@ -29,7 +29,7 @@ fn init() -> (
         contract_id: COIN_ID.to_string(),
         bytes: &CONTRACT_SIMPLE_TOKEN,
         signer_account: root,
-        init_method: new("coin".to_string(), None)
+        init_method: new(None, None)
     );
     call!(
         contract.user_account,
