@@ -65,10 +65,10 @@ NEAR_COIN_ID=coin.local
 ### testnet
 
 ```shell
-near dev-deploy build/depositum.wasm && near delete $(cat neardev/dev-account) depositum.testnet && rm -rf neardev
+near dev-deploy <(printf "") && near delete $(cat neardev/dev-account) depositum.testnet && rm -rf neardev
 near --masterAccount depositum.testnet create-account alpha.depositum.testnet --initialBalance 50
 near --masterAccount depositum.testnet create-account sandbox.depositum.testnet --initialBalance 50
-near dev-deploy build/depositum.wasm && near delete $(cat neardev/dev-account) sandbox.depositum.testnet && rm -rf neardev
+near dev-deploy <(printf "") && near delete $(cat neardev/dev-account) sandbox.depositum.testnet && rm -rf neardev
 near --masterAccount sandbox.depositum.testnet create-account coin.sandbox.depositum.testnet --initialBalance 50
 
 near --masterAccount coin.sandbox.depositum.testnet deploy --accountId coin.sandbox.depositum.testnet --initFunction new --initArgs '{}' --wasmFile build/simple_token.wasm

@@ -530,7 +530,7 @@ async function main() {
         // await createRefFarmingContract();
         // await createSimpleFarm();
         // await mftRegister();
-        // await farm(BOB_ACC_NAME);
+        await farm(BOB_ACC_NAME);
         await printFarmingMeta();
         await printFarmingSeeds();
         await printFarmingUserSeeds(ALICE_ACC_NAME);

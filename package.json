@@ -13,7 +13,6 @@
     "setup": "yarn up && yarn setup-near",
     "up": "yarn down && docker-compose up --detach",
     "down": "docker-compose down --volumes",
-
     "build-ref-farming": "cargo build --package \"ref_farming_strategy\" --target wasm32-unknown-unknown --release"
   },
   "devDependencies": {

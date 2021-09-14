@@ -6,3 +6,6 @@ node_modules
 testnet.env
 build
 .env
+
+src/contract/ref_farming_strategy/target
+src/contract/counter/target
