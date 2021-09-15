@@ -12,6 +12,7 @@ const REF_FARMING_ACC_NAME = near.accountIdBySlug(`ref-farming-${ACCOUNT}`);
 const USD_TOKEN_ACC_NAME = near.accountIdBySlug(`usdc-${ACCOUNT}`);
 const REWARD_TOKEN_ACC_NAME = near.accountIdBySlug(`reward-${ACCOUNT}`);
 const WNEAR_TOKEN_ACC_NAME = near.accountIdBySlug(`wnear-${ACCOUNT}`);
+const FARMING_ACC_NAME = near.accountIdBySlug(`farming-${ACCOUNT}`);
 const sender = near.parseAccountNetwork(near.accountIdBySlug(ACCOUNT));
 
 async function prepareAccounts(accounts: string[]) {
@@ -196,14 +197,14 @@ async function mintRewardTokens() {
     }
 
 }
-async function mintTokens() {
+async function mintTokens(accounts: string[]) {
     console.log('[SETUP] MINT TOKENS');
 
     const usdAcc = near.custodianAccount(USD_TOKEN_ACC_NAME);
     const wnearAcc = near.custodianAccount(WNEAR_TOKEN_ACC_NAME);
     const usdToken = await near.Contract.connect(near.Contract, USD_TOKEN_ACC_NAME, usdAcc)
 
-    for (const accId of [ALICE_ACC_NAME, BOB_ACC_NAME, REF_FINANCE_ACC_NAME]) {
+    for (const accId of accounts) {
         const balance = await usdToken.call<string>({
             methodName: 'ft_balance_of',
             args: { account_id: accId }
@@ -225,7 +226,7 @@ async function mintTokens() {
 
     const wnearToken = await near.Contract.connect(near.Contract, WNEAR_TOKEN_ACC_NAME, wnearAcc)
 
-    for (const accId of [ALICE_ACC_NAME, BOB_ACC_NAME, REF_FINANCE_ACC_NAME]) {
+    for (const accId of accounts) {
         const balance = await wnearToken.call<string>({
             methodName: 'ft_balance_of',
             args: { account_id: accId }
@@ -498,20 +499,20 @@ async function printPoolShares(poolId: number, account: string) {
 async function main() {
     console.log('[SETUP] IN PROGRESS');
     const init = async () => {
-        await prepareAccounts([
-            ALICE_ACC_NAME, WNEAR_TOKEN_ACC_NAME, BOB_ACC_NAME, REF_FINANCE_ACC_NAME, USD_TOKEN_ACC_NAME
-        ]);
-        await createRefFinanceContract();
-        await createTokens();
-        await mintTokens();
-        await whitelistTokensInRef();
+        // await prepareAccounts([
+        //     ALICE_ACC_NAME, WNEAR_TOKEN_ACC_NAME, BOB_ACC_NAME, REF_FINANCE_ACC_NAME, USD_TOKEN_ACC_NAME
+        // ]);
+        // await createRefFinanceContract();
+        // await createTokens();
+        await mintTokens([ALICE_ACC_NAME, BOB_ACC_NAME, REF_FINANCE_ACC_NAME, FARMING_ACC_NAME]);
+        // await whitelistTokensInRef();
     };
 
 
     const accountActions = async () => {
         // 1)
         await attachDeposit();
-        // 2)
+        // 2) deposit
         await transferTokensToRefContract();
         // 3) add pool
         await addPool();
@@ -536,19 +537,19 @@ async function main() {
         await printFarmingUserSeeds(ALICE_ACC_NAME);
     };
 
-    await initFarming();
+    // await initFarming();
 
 
-    // await init();
-    // await accountActions();
+    await init();
+    await accountActions();
 
     // await swap(BOB_ACC_NAME);
     // await withdraw(BOB_ACC_NAME, USD_TOKEN_ACC_NAME, '1000');
 
-    // await printPools();
-    // await printBlance(BOB_ACC_NAME);
+    await printPools();
+    await printBlance(FARMING_ACC_NAME);
     // await printBlance(ALICE_ACC_NAME);
-    await printPoolShares(0, ALICE_ACC_NAME);
+    // await printPoolShares(0, ALICE_ACC_NAME);
     // await printPoolShares(0, BOB_ACC_NAME);
 }
 

@@ -5,6 +5,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "deploy": "npx ts-node src/contract/deploy",
+    "deploy-ref-farming": "npx ts-node src/contract/deployRefFarming",
     "setup-env": "yarn setup-env-1 && yarn setup-env-2",
     "setup-env-1": "npx ts-node util/setup-env-s1",
     "setup-env-2": "npx ts-node util/setup-env-s2",
