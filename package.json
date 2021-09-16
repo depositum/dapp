@@ -4,7 +4,8 @@
   "repository": "git@github.com:InfinityHackathon/metabuidl-2021-novum-depositum.git",
   "license": "UNLICENSED",
   "scripts": {
-    "deploy": "npx ts-node src/contract/deploy",
+    "deploy_contract": "npx ts-node src/contract/deploy",
+    "setup_state": "bash util/setup-stage.sh",
     "setup-env": "yarn setup-env-1 && yarn setup-env-2",
     "setup-env-1": "npx ts-node util/setup-env-s1",
     "setup-env-2": "npx ts-node util/setup-env-s2",

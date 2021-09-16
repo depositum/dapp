@@ -5,18 +5,17 @@
   </p>
 </div>
 
-## Local environment
+## Local config
 
 ```shell
 yarn install
 yarn setup
-source util/near-shortcut.sh
-near-local send alice.local bob.local 1.42
-NEAR_ENV=local npx near --keyPath <(local-key bob.local) call  ref-finance.local storage_deposit '{"account_id": "bob.local", "registration_only": false}' --accountId bob.local --amount 0.1
-NEAR_ENV=local npx near --keyPath <(local-key bob.local) call  ref-finance.local storage_deposit '{"account_id": "alice.local", "registration_only": false}' --accountId bob.local --amount 0.1
-
-
-NEAR_ENV=local npx near --keyPath <(local-key bob.local) call usdt.local ft_transfer_call "{\"receiver_id\": \"ref-finance.local\", \"amount\": \"1000000000000\", \"msg\": \"\"}" --accountId bob.local --amount 0.000000000000000000000001
+npm install --global near-cli
+NEAR_ENV=local near send alice.local bob.local 1.42
+NEAR_ENV=local near state depositum.local
+NEAR_ENV=local near --accountId bob.local call ref-finance.local storage_deposit '{"account_id": "bob.local", "registration_only": false}' --accountId bob.local --amount 0.1
+NEAR_ENV=local near --accountId bob.local call  ref-finance.local storage_deposit '{"account_id": "alice.local", "registration_only": false}' --accountId bob.local --amount 0.1
+NEAR_ENV=local near --accountId bob.local call usdt.local ft_transfer_call "{\"receiver_id\": \"ref-finance.local\", \"amount\": \"1000000000000\", \"msg\": \"\"}" --accountId bob.local --amount 0.000000000000000000000001
 ```
 
 ## Util
@@ -40,57 +39,38 @@ make clean
 make qa
 ```
 
-## Deploy
+## Deploy web
+```shell
+yarn deploy_web
+```
+
+## Deploy contract
+
+### stage
+
+`cp .env.test .env` for `testnet`
+`cp .env.beta .env` for `betanet`
+`cp .env.local .env` for `local` and run `yarn setup`
 
 ```shell
 make rebuild
 ```
-
-### local
-
+> ⚠️The operations not idempotent at yet
 ```shell
-yarn setup
-source util/near-shortcut.sh
-near-local --masterAccount local create-account coin.local
-near-local --masterAccount coin.local deploy --accountId coin.local --initFunction new --initArgs '{}' --wasmFile build/simple_token.wasm
-near-local --masterAccount local create-account depositum.local
-```
-`.env`
-```ini
-NEAR_ENV=local
-NEAR_DEPOSITUM_ID=depositum.local
-NEAR_COIN_ID=coin.local
-```
-
-### testnet
-
-```shell
-near dev-deploy <(printf "") && near delete $(cat neardev/dev-account) depositum.testnet && rm -rf neardev
-near --masterAccount depositum.testnet create-account alpha.depositum.testnet --initialBalance 50
-near --masterAccount depositum.testnet create-account sandbox.depositum.testnet --initialBalance 50
-near dev-deploy <(printf "") && near delete $(cat neardev/dev-account) sandbox.depositum.testnet && rm -rf neardev
-near --masterAccount sandbox.depositum.testnet create-account coin.sandbox.depositum.testnet --initialBalance 50
-
-near --masterAccount coin.sandbox.depositum.testnet deploy --accountId coin.sandbox.depositum.testnet --initFunction new --initArgs '{}' --wasmFile build/simple_token.wasm
-```
-
-`.env`
-```ini
-NEAR_ENV=testnet
-NEAR_DEPOSITUM_ID=alpha.depositum.testnet
-NEAR_COIN_ID=coin.sandbox.depositum.testnet
+yarn setup_state
+yarn deploy_contract
 ```
 
 ### mainnet
 
 TBD
 
-### deploy
-
-```shell
-yarn deploy
-```
 
 ## Usage
 
-TBD
+```shell
+source <(< .env xargs -n1 echo "export $1")
+near view ${NEAR_DEPOSITUM_ID} coin_list
+near view ${NEAR_DEPOSITUM_ID} strategy_list
+near view ${NEAR_DEPOSITUM_ID} balance_of '{"account_id": "<account_id>"}'
+```

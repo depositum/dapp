@@ -1,6 +1,24 @@
-on: [push]
-
 name: contract
+
+on:
+  push:
+    paths:
+      - '.cargo/**'
+      - 'src/contract/**'
+      - 'Cargo.lock'
+      - 'Cargo.toml'
+      - 'toolchain.toml'
+    branches:
+      - main
+  pull_request:
+    paths:
+      - '.cargo/**'
+      - 'src/contract/**'
+      - 'Cargo.lock'
+      - 'Cargo.toml'
+      - 'toolchain.toml'
+    branches:
+      - main
 
 jobs:
 
