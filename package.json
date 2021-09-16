@@ -5,7 +5,10 @@
   "license": "UNLICENSED",
   "scripts": {
     "deploy": "npx ts-node src/contract/deploy",
+    "build-ref-farming": "cargo build --package \"ref_farming_strategy\" --target wasm32-unknown-unknown --release",
     "deploy-ref-farming": "npx ts-node src/contract/deployRefFarming",
+    "deploy_contract": "npx ts-node src/contract/deploy",
+    "setup_state": "bash util/setup-stage.sh",
     "setup-env": "yarn setup-env-1 && yarn setup-env-2",
     "setup-env-1": "npx ts-node util/setup-env-s1",
     "setup-env-2": "npx ts-node util/setup-env-s2",
@@ -14,8 +17,7 @@
     "setup-betanet": "NEAR_ENV=betanet npx ts-node util/setup-testnet",
     "setup": "yarn up && yarn setup-near",
     "up": "yarn down && docker-compose up --detach",
-    "down": "docker-compose down --volumes",
-    "build-ref-farming": "cargo build --package \"ref_farming_strategy\" --target wasm32-unknown-unknown --release"
+    "down": "docker-compose down --volumes"
   },
   "devDependencies": {
     "@4ire-labs/near-sdk": "1.0.0-beta.8",
