@@ -1,0 +1,30 @@
+name: web
+
+on:
+  push:
+    paths:
+      - 'src/web/**'
+      - '*.json'
+      - 'yarn.lock'
+    branches:
+      - main
+  pull_request:
+    paths:
+      - 'src/web/**'
+      - '*.json'
+      - 'yarn.lock'
+    branches:
+      - main
+
+jobs:
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      - run: yarn install
+#      - run: yarn setup
+      - run: yarn test

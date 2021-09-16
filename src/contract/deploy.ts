@@ -2,7 +2,6 @@ import * as near from '@4ire-labs/near-sdk'
 import * as util from '../../util'
 import fs from 'fs'
 import path from 'path'
-import {DeployProps} from "@4ire-labs/near-sdk/contract";
 
 util.config('')
 const environment = near.environment()
