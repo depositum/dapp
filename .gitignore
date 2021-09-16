@@ -4,6 +4,7 @@
 .secrets
 node_modules
 testnet.env
+betanet.env
 build
 .env
 

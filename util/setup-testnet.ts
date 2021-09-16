@@ -1,7 +1,7 @@
 import * as near from '@4ire-labs/near-sdk'
 import * as util from '.'
-
-util.config('testnet');
+const NETWORK = process.env.NEAR_ENV;
+util.config(NETWORK);
 
 const ACCOUNT: string | undefined = process.env.MAIN_ACCOUNT || '';
 
@@ -15,6 +15,7 @@ const WNEAR_TOKEN_ACC_NAME = near.accountIdBySlug(`wnear-${ACCOUNT}`);
 const FARMING_ACC_NAME = near.accountIdBySlug(`farming-${ACCOUNT}`);
 const sender = near.parseAccountNetwork(near.accountIdBySlug(ACCOUNT));
 
+console.log('FARMING_ACC_NAME', FARMING_ACC_NAME);
 async function prepareAccounts(accounts: string[]) {
     console.log('[SETUP] PREPARE ACCOUNTS')
     for (const accName of accounts) {
@@ -59,7 +60,7 @@ async function prepareAccounts(accounts: string[]) {
 
 async function createRewardToken() {
     console.log('[SETUP] CREATE SEED TOKEN CONTRACT');
-    const token = await near.fetchContract('dev-1630516277838-72756524527007', 'testnet');
+    const token = await near.fetchContract('dev-1630516277838-72756524527007', NETWORK);
 
     // create SEED contract
     try {
@@ -78,7 +79,10 @@ async function createRewardToken() {
 }
 async function createTokens() {
     console.log('[SETUP] CREATE TOKEN CONTRACTS');
-    const token = await near.fetchContract('dev-1630516277838-72756524527007', 'testnet');
+    // const token = await near.fetchContract('dev-1630516277838-72756524527007', 'testnet');
+    const token = await near.fetchContract(NETWORK === 'testnet'
+        ? 'dev-1630516277838-72756524527007'
+        : 'dev-1631815074487-91124265476904', NETWORK);
 
     // create USDC contract
     try {
@@ -295,7 +299,7 @@ async function createSimpleFarm() {
 
     const meta = await farmingContract.call<any>({
         methodName: 'get_metadata',
-        args: { }
+        args: {}
     });
 
     if (meta.farm_count !== '0') {
@@ -454,7 +458,7 @@ async function printFarmingMeta() {
 
     const res = await refContract.call<any>({
         methodName: 'get_metadata',
-        args: { }
+        args: {}
     });
 
     console.log(`farming meta: ${JSON.stringify(res, null, 2)}`);
@@ -499,13 +503,13 @@ async function printPoolShares(poolId: number, account: string) {
 async function main() {
     console.log('[SETUP] IN PROGRESS');
     const init = async () => {
-        // await prepareAccounts([
-        //     ALICE_ACC_NAME, WNEAR_TOKEN_ACC_NAME, BOB_ACC_NAME, REF_FINANCE_ACC_NAME, USD_TOKEN_ACC_NAME
-        // ]);
-        // await createRefFinanceContract();
-        // await createTokens();
+        await prepareAccounts([
+            ALICE_ACC_NAME, WNEAR_TOKEN_ACC_NAME, BOB_ACC_NAME, REF_FINANCE_ACC_NAME, USD_TOKEN_ACC_NAME
+        ]);
+        await createRefFinanceContract();
+        await createTokens();
         await mintTokens([ALICE_ACC_NAME, BOB_ACC_NAME, REF_FINANCE_ACC_NAME, FARMING_ACC_NAME]);
-        // await whitelistTokensInRef();
+        await whitelistTokensInRef();
     };
 
 

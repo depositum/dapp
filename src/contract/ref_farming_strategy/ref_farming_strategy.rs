@@ -20,8 +20,10 @@ const STORAGE_BALANCE_OFF_VIEW_GAS: Gas = Gas(1_000_000_000_000);
 const STORAGE_DEPOSIT_CALL_GAS: Gas = Gas(7_000_000_000_000);
 const DEPOSIT_CALL_GAS: Gas = Gas(35_000_000_000_000);
 const THIRTY_TGAS: Gas = Gas(30_000_000_000_000);
+const TWO_HUNDRED_TGAS: Gas = Gas(210_000_000_000_000);
 const SIMPLE_CALLBACK_GAS: Gas = Gas(1_000_000_000_000);
-const TWENTY_TGAS: Gas = Gas(20000000000000);
+const TWENTY_TGAS: Gas = Gas(20_000_000_000_000);
+const TEN_TGAS: Gas = Gas(20_000_000_000_000);
 // const STORAGE_DEPOSIT_NEARS: u128 = 1250000000000000000000; // initial
 const STORAGE_DEPOSIT_NEARS: u128 = 1_250_000_000_000_000_000_000;
 
@@ -56,6 +58,8 @@ pub trait RefFinancePostActions {
     fn callback_storage_deposit(&mut self);
     fn callback_swap(&mut self, strategy: Strategy);
     fn callback_ft_transfer_call(&mut self, strategy: Strategy);
+    fn callback_add_liquidity(&mut self, strategy: Strategy);
+    fn callback_mft_transfer_call(&mut self, strategy: Strategy);
 }
 
 #[ext_contract(ft_token)]
@@ -77,7 +81,7 @@ pub trait ExtRefExchane {
         registration_only: Option<bool>,
     ) -> StorageBalance;
     fn swap(&mut self, actions: Vec<SwapAction>, referral_id: Option<AccountId>) -> U128;
-    fn add_liquidity(&mut self, sender_id: AccountId, amounts: Vec<Balance>) -> Balance;
+    fn add_liquidity(&mut self, sender_id: AccountId, amounts: Vec<U128>, pool_id: u64) -> Balance;
     fn mft_transfer_call(
         &mut self,
         token_id: String,
@@ -87,6 +91,7 @@ pub trait ExtRefExchane {
         msg: String,
     ) -> PromiseOrValue<U128>;
 }
+
 
 #[derive(BorshStorageKey, BorshSerialize)]
 pub(crate) enum StorageKey {
@@ -110,7 +115,7 @@ impl Strategy {
 #[derive(BorshSerialize, BorshDeserialize, PanicOnDefault)]
 pub struct RefFarmingStrategy {
     executor: AccountId,
-    ref_exchange_account: AccountId,
+    ref_farming_account: AccountId,
     ref_finance_account: AccountId,
     strategies: Vector<Strategy>,
     is_initialized: bool,
@@ -121,12 +126,12 @@ impl RefFarmingStrategy {
     #[init]
     pub fn new(
         executor: AccountId,
-        ref_exchange_account: AccountId,
+        ref_farming_account: AccountId,
         ref_finance_account: AccountId,
     ) -> Self {
         Self {
             executor,
-            ref_exchange_account,
+            ref_farming_account,
             ref_finance_account,
             strategies: Vector::new(StorageKey::Strategies),
             is_initialized: false,
@@ -158,7 +163,7 @@ impl RefFarmingStrategy {
         .then(ext_self::callback_storage_balance_of(
             env::current_account_id(),
             0,
-            THIRTY_TGAS + THIRTY_TGAS + THIRTY_TGAS, // todo replace with a proper const
+            THIRTY_TGAS + THIRTY_TGAS + THIRTY_TGAS + THIRTY_TGAS, // todo replace with a proper const
         ));
     }
 
@@ -184,7 +189,7 @@ impl RefFarmingStrategy {
             strategy,
             env::current_account_id(),
             0,
-            Gas(100000000000000), // todo replace with a proper const
+            TWO_HUNDRED_TGAS, // todo replace with a proper const
         ));
     }
 
@@ -219,7 +224,7 @@ impl RefFarmingStrategy {
                 strategy,
                 env::current_account_id(),
                 0,
-                TWENTY_TGAS, // todo replace with a proper const
+                THIRTY_TGAS + THIRTY_TGAS + THIRTY_TGAS + THIRTY_TGAS + THIRTY_TGAS, // todo replace with a proper const
             ));
         } else {
             log!("ft_transfer_call not successfull");
@@ -300,11 +305,53 @@ impl RefFarmingStrategy {
     #[private]
     pub fn callback_swap(&mut self, strategy: Strategy) {
         log!("callback_swap {:?}", strategy.amount);
+
+        ref_finance::add_liquidity(
+            env::current_account_id(),
+            vec![U128(10), U128(10)], // todo remove hardcode
+            0, // todo get proper pool id
+            self.ref_finance_account.clone(),
+            STORAGE_DEPOSIT_NEARS,
+            TWENTY_TGAS,
+        )
+        .then(ext_self::callback_add_liquidity(
+            strategy,
+            env::current_account_id(),
+            0,
+            THIRTY_TGAS + THIRTY_TGAS + THIRTY_TGAS, // todo replace with a proper const
+        ));
+    }
+
+    #[private]
+    pub fn callback_add_liquidity(&mut self, strategy: Strategy) {
+        log!("callback_add_liquidity {:?}", strategy.amount);
+
+         ref_finance::mft_transfer_call(
+            ":0".to_string(), // token id
+            self.ref_farming_account.clone(), // receiver id
+            U128(100), // amount, todo remove hardcode
+            None, // memo
+            "".to_string(), // msg
+            self.ref_finance_account.clone(),
+            1,
+            THIRTY_TGAS,
+        )
+        .then(ext_self::callback_mft_transfer_call(
+            strategy,
+            env::current_account_id(),
+            0,
+            TEN_TGAS, // todo replace with a proper const
+        ));
+    }
+
+    #[private]
+    pub fn callback_mft_transfer_call(&mut self, strategy: Strategy) {
+        log!("callback_mft_transfer_call {:?}", strategy.amount);
     }
 
     pub fn accounts_list(&self) -> Vec<AccountId> {
         vec![
-            self.ref_exchange_account.clone(),
+            self.ref_farming_account.clone(),
             self.ref_finance_account.clone(),
         ]
     }
@@ -328,13 +375,14 @@ impl RefFarmingStrategy {
             ref_exchange_account: AccountId,
             ref_finance_account: AccountId,
             strategies: Vector<Strategy>,
+            is_initialized: bool,
         }
         let current: RefFarmingStrategyOld =
             env::state_read().expect("Migrate: State doesn't exist");
 
         let mut next = RefFarmingStrategy::new(
             current.executor,
-            current.ref_exchange_account,
+            AccountId::new_unchecked("ref-farming-rant.testnet".to_string()),
             current.ref_finance_account,
         );
 
