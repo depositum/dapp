@@ -48,9 +48,9 @@ yarn deploy_web
 
 ### stage
 
-`cp .env.test .env` for `testnet`
-`cp .env.beta .env` for `betanet`
-`cp .env.local .env` for `local` and run `yarn setup`
+* `cp .env.test .env` for `testnet`
+* `cp .env.beta .env` for `betanet`
+* `cp .env.local .env` for `local` and run `yarn setup`
 
 ```shell
 make rebuild
