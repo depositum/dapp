@@ -76,3 +76,17 @@ near view ${NEAR_DEPOSITUM_ID} coin_list
 near view ${NEAR_DEPOSITUM_ID} strategy_list
 near view ${NEAR_DEPOSITUM_ID} balance_of '{"account_id": "<account_id>"}'
 ```
+
+Get some FT
+
+```shell
+near --account_id "$NEAR_DEV_ACCOUNT" call coin.sandbox.depositum.testnet ft_mint --amount 40.00125
+```
+
+Deposit some FT on Depositum
+
+```shell
+near --account_id "$NEAR_DEV_ACCOUNT" call coin.sandbox.depositum.testnet \
+  ft_transfer_call '{"receiver_id": "alpha.depositum.testnet", "amount": "10000000000000000000000000", "msg": ""}' \
+  --depositYocto 1 --gas 100000000000000
+```
