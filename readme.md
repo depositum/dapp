@@ -1,8 +1,10 @@
 <div align="center">
-  <h1><code>Novum Depositum at MetaBUIDL 2021</code></h1>
+  <h1><code>Depositum at MetaBUIDL 2021</code></h1>
+  <h2><code>First release at MetaBUIDL 2021</code></h2>
   <p>
-    <strong>WiP TBD</strong>
+    <strong>The simplify DiFi</strong>
   </p>
+  <img src="https://user-images.githubusercontent.com/761285/133910855-1b3b148b-1289-4e17-9a75-eb3782baa415.jpg" alt="Depositum demo" />
 </div>
 
 ## Local config
