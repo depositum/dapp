@@ -21,7 +21,7 @@ fn init() -> (
         signer_account: root,
         init_method: new(
             AccountId::new_unchecked("executor.near".to_string()),
-            AccountId::new_unchecked("a.near".to_string()), 
+            AccountId::new_unchecked("a.near".to_string()),
             AccountId::new_unchecked("b.near".to_string())
         ),
     );
@@ -31,17 +31,22 @@ fn init() -> (
         let user = root.create_user(accounts(id), to_yocto("200"));
         user_list.push(user);
     }
+
+    // create second strategy
     (contract, user_list)
 }
 
-#[test]
+// #[test]
 fn farm() {
     let (contract, _user) = init();
 
     // create first strategy
     let res = call!(
         contract.user_account,
-        contract.create(AccountId::new_unchecked(TOKEN_ID.to_string()), U128::from(100))
+        contract.create(
+            AccountId::new_unchecked(TOKEN_ID.to_string()),
+            U128::from(100)
+        )
     );
 
     let strategy_id: U64 = res.unwrap_json();
@@ -49,15 +54,46 @@ fn farm() {
     // check first id
     assert_eq!(strategy_id, U64::from(0));
 
-    // create second strategy
     let res = call!(
         contract.user_account,
-        contract.create(AccountId::new_unchecked(TOKEN_ID.to_string()), U128::from(100))
+        contract.create(
+            AccountId::new_unchecked(TOKEN_ID.to_string()),
+            U128::from(100)
+        )
     );
 
     let strategy_id: U64 = res.unwrap_json();
 
     // check second id
     assert_eq!(strategy_id, U64::from(1));
+}
+
+#[test]
+fn calc_swap_amount_out() {
+    let (contract, _user) = init();
+
+    // create first strategy
+    // mut self, amount_in: u128, pool_info: &PoolInfo, slippage: u32
+    let res = call!(
+        contract.user_account,
+        contract.calc_swap_amount_out(
+            100, 
+            &PoolInfo {
+                pool_kind: "Simple_pool".to_string(),
+                /// List of tokens in the pool.
+                token_account_ids: vec![],
+                /// How much NEAR this contract has.
+                amounts: vec![U128(100), U128(200)],
+                /// Fee charged for swap.
+                total_fee: 40,
+                /// Total number of shares.
+                shares_total_supply: U128(0),
+            },
+            10
+        )
+    );
+
+    // check first condition
+    assert_eq!(res.unwrap_json_value(), 0);
 }
 

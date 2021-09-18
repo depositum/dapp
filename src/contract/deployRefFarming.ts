@@ -44,7 +44,11 @@ async function deploy(name: string, init?: near.ChangeMethod) {
 async function main() {
     const refFarmingAccount = await deploy('ref_farming_strategy', <near.ChangeMethod>{
         methodName: 'new',
-        args: { executor: 'rant.testnet', ref_exchange_account: 'ref-exchange-rant.testnet', ref_finance_account: 'ref-finance-rant.testnet' }
+        args: { 
+            executor: 'strategy.testnet', 
+            ref_exchange_account: 'ref-exchange-strategy.testnet', 
+            ref_farming_account: 'ref-farming-strategy.testnet' 
+        }
     })
     // const depositum = await near.Contract.connect(near.Contract, refFarmingAccount.accountId, refFarmingAccount)
     // let callResult = await depositum.callRaw<void>({

@@ -7,7 +7,7 @@ const ACCOUNT: string | undefined = process.env.MAIN_ACCOUNT || '';
 
 const ALICE_ACC_NAME = near.accountIdBySlug(`alice-${ACCOUNT}`);
 const BOB_ACC_NAME = near.accountIdBySlug(`bob-${ACCOUNT}`);
-const REF_FINANCE_ACC_NAME = near.accountIdBySlug(`ref-finance-${ACCOUNT}`);
+const REF_EXCHANGE_ACC_NAME = near.accountIdBySlug(`ref-exchange-${ACCOUNT}`);
 const REF_FARMING_ACC_NAME = near.accountIdBySlug(`ref-farming-${ACCOUNT}`);
 const USD_TOKEN_ACC_NAME = near.accountIdBySlug(`usdc-${ACCOUNT}`);
 const REWARD_TOKEN_ACC_NAME = near.accountIdBySlug(`reward-${ACCOUNT}`);
@@ -28,7 +28,7 @@ async function prepareAccounts(accounts: string[]) {
 
     const aliceAcc = near.custodianAccount(ALICE_ACC_NAME, sender)
     const bobAcc = near.custodianAccount(BOB_ACC_NAME, sender)
-    const refFinanceAcc = near.custodianAccount(REF_FINANCE_ACC_NAME, sender)
+    const refFinanceAcc = near.custodianAccount(REF_EXCHANGE_ACC_NAME, sender)
     const usdcAcc = near.custodianAccount(USD_TOKEN_ACC_NAME, sender)
     const wnearAcc = near.custodianAccount(WNEAR_TOKEN_ACC_NAME, sender)
 
@@ -121,10 +121,10 @@ async function deleteAccounts(accounts: string[]) {
     }
 }
 
-async function createRefFinanceContract() {
-    console.log('[SETUP] CREATE REF FINANCE CONTRACT');
+async function createRefExchangeContract() {
+    console.log('[SETUP] CREATE REF EXCHANGE CONTRACT');
 
-    const financeAcc = near.custodianAccount(REF_FINANCE_ACC_NAME);
+    const financeAcc = near.custodianAccount(REF_EXCHANGE_ACC_NAME);
     const codeHash = (await (await near.accountConnect(financeAcc)).state()).code_hash;
     if (codeHash === '11111111111111111111111111111111') {
         const finance = await near.fetchContract('v2.ref-finance.near', 'mainnet');
@@ -161,7 +161,7 @@ async function createRefFarmingContract() {
                 init: {
                     methodName: 'new',
                     args: {
-                        owner_id: ALICE_ACC_NAME
+                        owner_id: REF_EXCHANGE_ACC_NAME
                     }
                 },
                 amount: '10', sender: farmingAcc
@@ -256,7 +256,7 @@ async function attachDeposit() {
     for (const accId of [ALICE_ACC_NAME, BOB_ACC_NAME]) {
         const acc = near.custodianAccount(accId);
 
-        const refContract = await near.Contract.connect(near.Contract, REF_FINANCE_ACC_NAME, acc);
+        const refContract = await near.Contract.connect(near.Contract, REF_EXCHANGE_ACC_NAME, acc);
 
         const res = await refContract.call<any>({
             methodName: 'storage_deposit',
@@ -269,7 +269,7 @@ async function attachDeposit() {
 
 async function whitelistTokensInRef() {
     const acc = near.custodianAccount(ALICE_ACC_NAME);
-    const refContract = await near.Contract.connect(near.Contract, REF_FINANCE_ACC_NAME, acc);
+    const refContract = await near.Contract.connect(near.Contract, REF_EXCHANGE_ACC_NAME, acc);
 
     const res = await refContract.callRaw<any>({
         methodName: 'extend_whitelisted_tokens',
@@ -281,7 +281,7 @@ async function whitelistTokensInRef() {
 
 async function addPool() {
     const acc = near.custodianAccount(ALICE_ACC_NAME);
-    const refContract = await near.Contract.connect(near.Contract, REF_FINANCE_ACC_NAME, acc);
+    const refContract = await near.Contract.connect(near.Contract, REF_EXCHANGE_ACC_NAME, acc);
 
     const res = await refContract.callRaw<any>({
         methodName: 'add_simple_pool',
@@ -294,7 +294,7 @@ async function addPool() {
 async function createSimpleFarm() {
     console.log('[SETUP] CREATE SIMPLE FARM');
 
-    const ownerAcc = near.custodianAccount(ALICE_ACC_NAME);
+    const ownerAcc = near.custodianAccount(REF_EXCHANGE_ACC_NAME);
     const farmingContract = await near.Contract.connect(near.Contract, REF_FARMING_ACC_NAME, ownerAcc);
 
     const meta = await farmingContract.call<any>({
@@ -302,13 +302,13 @@ async function createSimpleFarm() {
         args: {}
     });
 
-    if (meta.farm_count !== '0') {
-        return;
-    }
+    // if (meta.farm_count !== '0') {
+    // return;
+    // }
 
     const terms = {
-        seed_id: `${ALICE_ACC_NAME}@0`,
-        reward_token: REWARD_TOKEN_ACC_NAME,
+        seed_id: `${REF_EXCHANGE_ACC_NAME}@0`,
+        reward_token: USD_TOKEN_ACC_NAME,
         start_at: 0,
         reward_per_session: '1',
         session_interval: 60,
@@ -325,7 +325,7 @@ async function createSimpleFarm() {
 async function addLiquidityToPool() {
     // near call $CONTRACT_ID add_liquidity '{"pool_id": 0, "amounts": ["10000", "10000"]}' --accountId $USER_ID --amount 0.000000000000000000000001
     const acc = near.custodianAccount(BOB_ACC_NAME);
-    const refContract = await near.Contract.connect(near.Contract, REF_FINANCE_ACC_NAME, acc);
+    const refContract = await near.Contract.connect(near.Contract, REF_EXCHANGE_ACC_NAME, acc);
 
     const res = await refContract.callRaw<any>({
         methodName: 'add_liquidity',
@@ -340,7 +340,7 @@ async function addLiquidityToPool() {
 
 async function swap(account: string) {
     const acc = near.custodianAccount(account);
-    const refContract = await near.Contract.connect(near.Contract, REF_FINANCE_ACC_NAME, acc);
+    const refContract = await near.Contract.connect(near.Contract, REF_EXCHANGE_ACC_NAME, acc);
 
     const res = await refContract.callRaw<any>({
         methodName: 'swap',
@@ -361,7 +361,7 @@ async function swap(account: string) {
 
 async function withdraw(account: string, token: string, amount: string) {
     const acc = near.custodianAccount(account);
-    const refContract = await near.Contract.connect(near.Contract, REF_FINANCE_ACC_NAME, acc);
+    const refContract = await near.Contract.connect(near.Contract, REF_EXCHANGE_ACC_NAME, acc);
 
     const res = await refContract.callRaw<any>({
         methodName: 'withdraw',
@@ -383,7 +383,7 @@ async function transferTokensToRefContract() {
             const res = await tokenContract.call<any>({
                 methodName: 'ft_transfer_call',
                 args: {
-                    receiver_id: REF_FINANCE_ACC_NAME,
+                    receiver_id: REF_EXCHANGE_ACC_NAME,
                     amount: '10000000000',
                     msg: ''
                 },
@@ -398,7 +398,7 @@ async function mftRegister() {
     console.log('[SETUP] REGISTER FARMING MFT');
 
     const acc = near.custodianAccount(REF_FARMING_ACC_NAME);
-    const finance = await near.Contract.connect(near.Contract, REF_FINANCE_ACC_NAME, acc);
+    const finance = await near.Contract.connect(near.Contract, REF_EXCHANGE_ACC_NAME, acc);
     const res = await finance.call<any>({
         methodName: 'mft_register',
         args: {
@@ -414,7 +414,7 @@ async function farm(accountName: string) {
     console.log(`[SETUP] FARM FOR ${accountName}`);
 
     const acc = near.custodianAccount(accountName);
-    const finance = await near.Contract.connect(near.Contract, REF_FINANCE_ACC_NAME, acc);
+    const finance = await near.Contract.connect(near.Contract, REF_EXCHANGE_ACC_NAME, acc);
     const res = await finance.call<any>({
         methodName: 'mft_transfer_call',
         args: {
@@ -430,7 +430,7 @@ async function farm(accountName: string) {
 
 async function printPools() {
     const aliceAcc = near.custodianAccount(ALICE_ACC_NAME);
-    const refContract = await near.Contract.connect(near.Contract, REF_FINANCE_ACC_NAME, aliceAcc);
+    const refContract = await near.Contract.connect(near.Contract, REF_EXCHANGE_ACC_NAME, aliceAcc);
 
     const pools = await refContract.call<any>({
         methodName: 'get_pools',
@@ -442,7 +442,7 @@ async function printPools() {
 
 async function printBlance(account: string) {
     const acc = near.custodianAccount(account);
-    const refContract = await near.Contract.connect(near.Contract, REF_FINANCE_ACC_NAME, acc);
+    const refContract = await near.Contract.connect(near.Contract, REF_EXCHANGE_ACC_NAME, acc);
 
     const res = await refContract.call<any>({
         methodName: 'get_deposits',
@@ -490,7 +490,7 @@ async function printFarmingUserSeeds(account: string) {
 
 async function printPoolShares(poolId: number, account: string) {
     const acc = near.custodianAccount(account);
-    const refContract = await near.Contract.connect(near.Contract, REF_FINANCE_ACC_NAME, acc);
+    const refContract = await near.Contract.connect(near.Contract, REF_EXCHANGE_ACC_NAME, acc);
 
     const res = await refContract.call<any>({
         methodName: 'get_pool_shares',
@@ -502,13 +502,19 @@ async function printPoolShares(poolId: number, account: string) {
 
 async function main() {
     console.log('[SETUP] IN PROGRESS');
+
+    // await deleteAccounts([
+    //     ALICE_ACC_NAME, WNEAR_TOKEN_ACC_NAME, BOB_ACC_NAME, REF_FINANCE_ACC_NAME, USD_TOKEN_ACC_NAME
+    //     ,REF_FARMING_ACC_NAME
+    // ]);
+
     const init = async () => {
         await prepareAccounts([
-            ALICE_ACC_NAME, WNEAR_TOKEN_ACC_NAME, BOB_ACC_NAME, REF_FINANCE_ACC_NAME, USD_TOKEN_ACC_NAME
+            ALICE_ACC_NAME, WNEAR_TOKEN_ACC_NAME, BOB_ACC_NAME, REF_EXCHANGE_ACC_NAME, USD_TOKEN_ACC_NAME
         ]);
-        await createRefFinanceContract();
+        await createRefExchangeContract();
         await createTokens();
-        await mintTokens([ALICE_ACC_NAME, BOB_ACC_NAME, REF_FINANCE_ACC_NAME, FARMING_ACC_NAME]);
+        await mintTokens([ALICE_ACC_NAME, BOB_ACC_NAME, REF_EXCHANGE_ACC_NAME, FARMING_ACC_NAME]);
         await whitelistTokensInRef();
     };
 
@@ -526,32 +532,36 @@ async function main() {
 
 
     const initFarming = async () => {
-        // await prepareAccounts([
-        //     REWARD_TOKEN_ACC_NAME,
-        //     REF_FARMING_ACC_NAME
-        // ]);
+        await prepareAccounts([
+            // REWARD_TOKEN_ACC_NAME,
+            REF_FARMING_ACC_NAME
+        ]);
         // await createRewardToken();
         // await mintRewardTokens();
-        // await createRefFarmingContract();
-        // await createSimpleFarm();
-        // await mftRegister();
-        await farm(BOB_ACC_NAME);
+        await createRefFarmingContract();
+        await createSimpleFarm();
+        await mftRegister();
+        // await farm(BOB_ACC_NAME);
         await printFarmingMeta();
         await printFarmingSeeds();
-        await printFarmingUserSeeds(ALICE_ACC_NAME);
+        await printFarmingUserSeeds(REF_EXCHANGE_ACC_NAME);
     };
-
-    // await initFarming();
-
 
     await init();
     await accountActions();
+    await initFarming();
+
+
+    await prepareAccounts([FARMING_ACC_NAME]);
+    await mintTokens([FARMING_ACC_NAME]);
+
+
 
     // await swap(BOB_ACC_NAME);
     // await withdraw(BOB_ACC_NAME, USD_TOKEN_ACC_NAME, '1000');
 
-    await printPools();
-    await printBlance(FARMING_ACC_NAME);
+    // await printPools();
+    // await printBlance(FARMING_ACC_NAME);
     // await printBlance(ALICE_ACC_NAME);
     // await printPoolShares(0, ALICE_ACC_NAME);
     // await printPoolShares(0, BOB_ACC_NAME);
