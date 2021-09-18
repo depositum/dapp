@@ -115,7 +115,7 @@
     "@angular/platform-browser-dynamic": "^12.2.5",
     "@angular/router": "^12.2.5",
     "@angular/service-worker": "^12.2.5",
-    "near-api-js": "https://github.com/near/near-api-js#44972f79b3a1a1ef5552793e9dbc679005a2b38d",
+    "near-api-js": "https://github.com/ilyar/near-api-js#fix_types",
     "rxjs": "^7.3.0",
     "tslib": "^2.3.1",
     "zone.js": "^0.11.4"

@@ -6196,9 +6196,9 @@ near-api-js@^0.42.0:
     text-encoding-utf-8 "^1.0.2"
     tweetnacl "^1.0.1"
 
-"near-api-js@https://github.com/near/near-api-js#44972f79b3a1a1ef5552793e9dbc679005a2b38d":
+"near-api-js@https://github.com/ilyar/near-api-js#fix_types":
   version "0.42.0"
-  resolved "https://github.com/near/near-api-js#44972f79b3a1a1ef5552793e9dbc679005a2b38d"
+  resolved "https://github.com/ilyar/near-api-js#191579aeb1e260f78b7391fb7e90273dba015ac0"
   dependencies:
     bn.js "5.2.0"
     borsh "^0.6.0"

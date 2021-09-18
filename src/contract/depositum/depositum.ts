@@ -1,7 +1,7 @@
 import {
   Contract,
   Account,
-} from 'near-api-js'
+} from 'near-api-js/src'
 interface DepositumInterface {
   coin_list(): Promise<string[]>
   balance_of(account_id: Account): Promise<Array<Array<[string, string]>>>

@@ -9,7 +9,8 @@ import {
   keyStores,
   WalletConnection,
   ConnectConfig,
-} from 'near-api-js'
+  Account,
+} from 'near-api-js/src'
 import {
   formatNearAmount,
   parseNearAmount,
@@ -43,14 +44,14 @@ export class WalletService {
   async initContract(env: string): Promise<void> {
     this.config = config(env) // TODO implement detect env
     // FIXME yarn build_web [error] SyntaxError: build/web/main-es2015.XXX.js: Deleting local variable in strict mode. (1:259472)
-    const cfg = <ConnectConfig>this.config
+    //const cfg = <ConnectConfig>this.config
     //cfg.keyStore = new keyStores.BrowserLocalStorageKeyStore()
-    const near = await connect(cfg)
-    // const near = await connect(Object.assign({
-    //   deps: {
-    //     keyStore: new keyStores.BrowserLocalStorageKeyStore(),
-    //   },
-    // }, this.config))
+    //const near = await connect(cfg)
+    const near = await connect(Object.assign({
+      deps: {
+        keyStore: new keyStores.BrowserLocalStorageKeyStore(),
+      },
+    }, this.config))
     this.connection = new WalletConnection(near, this.config.networkId)
     this.accountId = this.connection.getAccountId()
     this.contractName = this.config.contractName
