@@ -77,7 +77,7 @@ fn calc_swap_amount_out() {
     let res = call!(
         contract.user_account,
         contract.calc_swap_amount_out(
-            100, 
+            100,
             &PoolInfo {
                 pool_kind: "Simple_pool".to_string(),
                 /// List of tokens in the pool.
@@ -96,4 +96,3 @@ fn calc_swap_amount_out() {
     // check first condition
     assert_eq!(res.unwrap_json_value(), 0);
 }
-
