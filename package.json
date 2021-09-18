@@ -1,7 +1,8 @@
 {
-  "name": "metabuidl-2021-novum-depositum",
-  "version": "1.0.0-beta.0",
-  "repository": "git@github.com:InfinityHackathon/metabuidl-2021-novum-depositum.git",
+  "name": "depositum",
+  "description": "The simplify DiFi",
+  "version": "1.0.0-alpha.0",
+  "repository": " git@github.com:depositum/dapp.git",
   "license": "UNLICENSED",
   "browserslist": [
     "defaults",
@@ -9,14 +10,18 @@
     "not IE 11"
   ],
   "scripts": {
+    "postinstall": "yarn --silent build_asset",
     "ng": "ng",
     "start": "ng serve",
     "start_public": "ng serve --disable-host-check",
-    "build": "ng build --base-href=/",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test",
-    "deploy_contract": "npx ts-node src/contract/deploy",
+    "build_web": "ng build --base-href=/",
+    "build_asset": "pwa-asset-generator src/web/asset/logo.svg src/web/asset/icon --favicon --favicon --type png --padding 0 --background transparent --opaque false --log false",
     "deploy_web": "ng deploy --base-href=/",
+    "test_coverage": "yarn test --code-coverage",
+    "lint": "ng lint",
+    "test": "ng test --watch=false --browsers=ChromeHeadless",
+    "deploy_contract": "npx ts-node src/contract/deploy",
     "setup_state": "bash util/setup-stage.sh",
     "setup-env": "yarn setup-env-1 && yarn setup-env-2",
     "setup-env-1": "npx ts-node util/setup-env-s1",
@@ -26,6 +31,76 @@
     "setup": "yarn up && yarn setup-near",
     "up": "yarn down && docker-compose up --detach",
     "down": "docker-compose down --volumes"
+  },
+  "eslintConfig": {
+    "root": true,
+    "ignorePatterns": [
+      "projects/**/*"
+    ],
+    "overrides": [
+      {
+        "files": [
+          "*.ts"
+        ],
+        "parserOptions": {
+          "project": [
+            "tsconfig.json"
+          ],
+          "createDefaultProgram": true
+        },
+        "extends": [
+          "plugin:@angular-eslint/recommended",
+          "plugin:@angular-eslint/template/process-inline-templates"
+        ],
+        "rules": {
+          "object-curly-spacing": [
+            "error",
+            "never"
+          ],
+          "computed-property-spacing": [
+            "error",
+            "always"
+          ],
+          "comma-dangle": [
+            "error",
+            "always-multiline"
+          ],
+          "semi": [
+            "error",
+            "never"
+          ],
+          "quotes": [
+            "error",
+            "single"
+          ],
+          "@angular-eslint/directive-selector": [
+            "error",
+            {
+              "type": "attribute",
+              "prefix": "app",
+              "style": "camelCase"
+            }
+          ],
+          "@angular-eslint/component-selector": [
+            "error",
+            {
+              "type": "element",
+              "prefix": "app",
+              "style": "kebab-case"
+            }
+          ]
+        }
+      },
+      {
+        "files": [
+          "*.html"
+        ],
+        "extends": [
+          "plugin:@angular-eslint/template/recommended"
+        ],
+        "rules": {}
+      }
+    ]
   },
   "dependencies": {
     "@4ire-labs/near-sdk": "1.0.0-beta.8",
@@ -40,7 +115,7 @@
     "@angular/platform-browser-dynamic": "^12.2.5",
     "@angular/router": "^12.2.5",
     "@angular/service-worker": "^12.2.5",
-    "near-api-js": "^0.42.0",
+    "near-api-js": "https://github.com/near/near-api-js#44972f79b3a1a1ef5552793e9dbc679005a2b38d",
     "rxjs": "^7.3.0",
     "tslib": "^2.3.1",
     "zone.js": "^0.11.4"
@@ -60,6 +135,7 @@
     "karma-jasmine": "~4.0.0",
     "karma-jasmine-html-reporter": "~1.7.0",
     "near-cli": "^2.1.1",
+    "pwa-asset-generator": "^4.3.6",
     "ts-node": "^10.2.1",
     "typescript": "<4.4.0"
   }

@@ -1,30 +1,17 @@
-import {
-  Component,
-} from '@angular/core';
-import {
-  WalletService,
-} from "./service/wallet.service";
-
+import {Component} from '@angular/core'
+import pkg from '../../../package.json'
 
 @Component({
   selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.sass'],
+  template: `
+    <app-panel
+      [title]="title"
+      [description]="description"></app-panel>
+    <router-outlet></router-outlet>
+  `,
+  styles: [],
 })
 export class AppComponent {
-  title = 'Depositum'
-  showHelp = false
-
-  constructor(
-    public wallet: WalletService,
-  ) {
-  }
-
-  toggleHelp(): void {
-    this.showHelp = !this.showHelp
-  }
-
-  titleFull(): string {
-    return `${this.title} (${this.wallet.contractName})`
-  }
+  title = pkg.name.toUpperCase()
+  description = pkg.description
 }

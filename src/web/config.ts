@@ -1,6 +1,4 @@
-import {
-  environment,
-} from './environments/environment'
+import {environment} from './environments/environment'
 
 export interface NetworkConfig {
   networkId: string
@@ -69,6 +67,6 @@ export function config(env: string): NetworkConfig {
         helperUrl: 'http://localhost:3000',
       }
     default:
-      throw Error(`Unconfigured environment '${env}'. Can be configured in src/config.js.`)
+      throw Error(`Unconfigured environment '${env}'`)
   }
 }

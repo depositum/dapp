@@ -1,10 +1,10 @@
 /* To learn more about this file see: https://angular.io/config/tsconfig. */
 {
-  "extends": "./tsconfig.web.json",
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "./build/out-tsc/spec",
+    "outDir": "build/spec",
     "types": [
-      "jasmine", "node"
+      "jasmine"
     ]
   },
   "files": [

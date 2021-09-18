@@ -6,3 +6,5 @@ node_modules
 testnet.env
 build
 .env
+src/web/asset/icon
+log

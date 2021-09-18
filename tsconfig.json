@@ -1,32 +1,30 @@
+/* To learn more about this file see: https://angular.io/config/tsconfig. */
 {
+  "compileOnSave": false,
   "compilerOptions": {
-    "outDir": "build/cjs",
-    "lib": [
-      "es2016",
-      "esnext"
-    ],
-    "module": "commonjs",
-    "target": "esnext",
-    "strict": true,
-    "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
-    "alwaysStrict": true,
-    "declaration": true,
-    "preserveSymlinks": true,
-    "preserveWatchOutput": true,
-    "pretty": false,
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitAny": false,
+    "strict": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
     "noImplicitReturns": true,
-    "noUnusedLocals": false,
+    "noFallthroughCasesInSwitch": true,
+    "sourceMap": true,
+    "declaration": false,
+    "downlevelIteration": true,
     "experimentalDecorators": true,
-    "resolveJsonModule": true
+    "moduleResolution": "node",
+    "importHelpers": true,
+    "target": "es2015",
+    "module": "es2015",
+    "lib": [
+      "es2015",
+      "dom"
+    ]
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "**/*.test.ts"
-  ]
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
+  }
 }

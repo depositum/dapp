@@ -1,16 +1,22 @@
 {
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
+  "cli": {
+    "packageManager": "yarn",
+    "defaultCollection": "@angular-eslint/schematics"
+  },
   "newProjectRoot": "projects",
   "projects": {
-    "depositum": {
+    "web": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
-          "style": "sass"
+          "inlineTemplate": true,
+          "inlineStyle": true,
+          "style": "scss"
         },
         "@schematics/angular:application": {
-          "strict": true
+          "strict": false
         }
       },
       "root": "",
@@ -24,20 +30,18 @@
             "index": "src/web/index.html",
             "main": "src/web/main.ts",
             "polyfills": "src/web/polyfills.ts",
-            "tsConfig": "tsconfig.app.json",
-            "inlineStyleLanguage": "sass",
+            "tsConfig": "tsconfig.web.json",
+            "inlineStyleLanguage": "scss",
             "assets": [
-              "src/web/favicon.ico",
-              "src/web/assets",
+              "src/web/asset",
               "src/web/manifest.webmanifest"
             ],
             "styles": [
-              "./node_modules/@angular/material/prebuilt-themes/indigo-pink.css",
-              "src/web/styles.sass"
+              "src/web/styles.scss"
             ],
             "scripts": [],
             "serviceWorker": true,
-            "ngswConfigPath": "ngsw-config.json"
+            "ngswConfigPath": ".etc/service-worker.json"
           },
           "configurations": {
             "production": {
@@ -76,10 +80,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "depositum:build:production"
+              "browserTarget": "web:build:production"
             },
             "development": {
-              "browserTarget": "depositum:build:development"
+              "browserTarget": "web:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -87,7 +91,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "depositum:build"
+            "browserTarget": "web:build"
           }
         },
         "test": {
@@ -96,18 +100,25 @@
             "main": "src/web/test.ts",
             "polyfills": "src/web/polyfills.ts",
             "tsConfig": "tsconfig.spec.json",
-            "karmaConfig": "karma.conf.js",
-            "inlineStyleLanguage": "sass",
+            "karmaConfig": ".etc/karma.conf.js",
+            "inlineStyleLanguage": "scss",
             "assets": [
-              "src/web/favicon.ico",
-              "src/web/assets",
+              "src/web/asset",
               "src/web/manifest.webmanifest"
             ],
             "styles": [
-              "./node_modules/@angular/material/prebuilt-themes/indigo-pink.css",
-              "src/web/styles.sass"
+              "src/web/styles.scss"
             ],
             "scripts": []
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html"
+            ]
           }
         },
         "deploy": {
@@ -119,5 +130,5 @@
       }
     }
   },
-  "defaultProject": "depositum"
+  "defaultProject": "web"
 }
