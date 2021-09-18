@@ -4,6 +4,9 @@
   <p>
     <strong>The simplify DiFi</strong>
   </p>
+  <p>
+    <a href="https://docs.google.com/presentation/d/1OxNCgkM2zkWJmW3ToX3UMtDIikhGKLr_0YuFrbAR748/edit#slide=id.p">Presentation of project</a>
+  </p>
   <img src="https://user-images.githubusercontent.com/761285/133910855-1b3b148b-1289-4e17-9a75-eb3782baa415.jpg" alt="Depositum demo" />
 </div>
 
