@@ -1,6 +1,4 @@
-import {
-  Contract,
-} from 'near-api-js'
+import {Contract,} from 'near-api-js'
 
 export class Depositum {
   /**
@@ -25,15 +23,22 @@ export class Depositum {
   /**
    * @returns {Promise<string[]>}
    */
-  coin_list() {
-    return this.contract.coin_list()
+  async coin_list() {
+    return (await this.contract.coin_list()).reduce((acc, it) => {
+      acc[it] = {}
+      // TODO add metadata
+      return acc
+    },{})
   }
 
   /**
    * @param account_id
-   * @returns {Promise<Array<Array<[string, string]>>>}
+   * @returns {Object}
    */
-  balance_of(account_id) {
-    return this.contract.balance_of(account_id)
+  async balance_of(account_id) {
+    return (await this.contract.balance_of(account_id)).reduce((acc, it) => {
+      acc[it[0]].amount = it[1]
+      return acc
+    }, (await this.coin_list()))
   }
 }
