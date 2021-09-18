@@ -1,5 +1,5 @@
 <div align="center">
-  <h1><code>Depositum at MetaBUIDL 2021</code></h1>
+  <h1><code>Depositum</code></h1>
   <h2><code>First release at MetaBUIDL 2021</code></h2>
   <p>
     <strong>The simplify DiFi</strong>
