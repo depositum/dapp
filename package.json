@@ -1,29 +1,45 @@
 {
-  "name": "metabuidl-2021-novum-depositum",
-  "version": "1.0.0-beta.0",
-  "repository": "git@github.com:InfinityHackathon/metabuidl-2021-novum-depositum.git",
+  "name": "depositum",
+  "description": "The simplify DiFi",
+  "version": "1.0.0-alpha.0",
+  "repository": "https://github.com/depositum/dapp",
   "license": "UNLICENSED",
+  "browserslist": [
+    "defaults",
+    "Firefox ESR",
+    "not IE 11"
+  ],
   "scripts": {
     "deploy": "npx ts-node src/contract/deploy",
     "build-ref-farming": "cargo build --package \"ref_farming_strategy\" --target wasm32-unknown-unknown --release",
     "deploy-ref-farming": "npx ts-node src/contract/deployRefFarming",
     "deploy_contract": "npx ts-node src/contract/deploy",
     "setup_state": "bash util/setup-stage.sh",
-    "setup-env": "yarn setup-env-1 && yarn setup-env-2",
-    "setup-env-1": "npx ts-node util/setup-env-s1",
-    "setup-env-2": "npx ts-node util/setup-env-s2",
-    "setup-near": "npx ts-node util/setup",
-    "setup-testnet": "NEAR_ENV=testnet npx ts-node util/setup-testnet",
     "setup-betanet": "NEAR_ENV=betanet npx ts-node util/setup-testnet",
+    "setup-env": "yarn setup-env-1 && yarn setup-env-2",
+    "setup-env-1": "ts-node util/setup-env-s1",
+    "setup-env-2": "ts-node util/setup-env-s2",
+    "setup-near": "ts-node util/setup",
+    "setup-testnet": "ts-node util/setup-testnet",
     "setup": "yarn up && yarn setup-near",
     "up": "yarn down && docker-compose up --detach",
-    "down": "docker-compose down --volumes"
+    "down": "docker-compose down --volumes",
+    "postinstall": "yarn --silent build_asset",
+    "build_asset": "pwa-asset-generator src/web/asset/logo.svg src/web/asset/icon --favicon --favicon --type png --padding 0 --background transparent --opaque false --log false",
+    "build_web": "parcel build src/web/index.html --public-url ./ --out-dir build/web",
+    "deploy_web": "yarn --silent build_web && gh-pages --repo git@github.com:depositum/depositum.github.io.git --dist build/web",
+    "watch": "nodemon --watch src -e ts --exec 'npm run start'",
+    "start": "parcel src/web/index.html --open"
   },
-  "devDependencies": {
+  "dependencies": {
     "@4ire-labs/near-sdk": "1.0.0-beta.8",
-    "dotenv": "^10.0.0",
-    "near-cli": "^2.1.1",
+    "env-cmd": "^10.1.0",
+    "gh-pages": "^3.2.3",
+    "near-api-js": "^0.42.0",
+    "nodemon": "^2.0.12",
+    "parcel-bundler": "^1.12.5",
+    "pwa-asset-generator": "^4.3.6",
     "ts-node": "^10.2.1",
-    "typescript": "^4.4.2"
+    "typescript": "<4.4.0"
   }
 }

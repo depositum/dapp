@@ -10,3 +10,4 @@ build
 
 src/contract/ref_farming_strategy/target
 src/contract/counter/target
+src/web/asset/icon

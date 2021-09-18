@@ -6,6 +6,7 @@ on:
       - '.cargo/**'
       - 'src/contract/**'
       - '!src/contract/**/*.ts'
+      - '!src/contract/**/*.js'
       - 'Cargo.lock'
       - 'Cargo.toml'
       - 'toolchain.toml'
