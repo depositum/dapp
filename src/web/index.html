@@ -98,8 +98,121 @@
       <div class="large-7 cell">
         <span class="panel__account" data-behavior="account-id"></span>
       </div>
-      <div class="large-2 cell align-center">
+      <div class="large-2 cell text-right">
         <button id="sign-out-button" class="button">Log Out</button>
+      </div>
+    </div>
+  </div>
+  <header class="portfolio-hero-header">
+    <!--<img class="portfolio-hero-header-logo" src="https://placehold.it/200"/>-->
+    <h1 class="portfolio-hero-header-h1">Balance</h1>
+    <ul id="balance">load...</ul>
+  </header>
+  <div class="grid-container" style="padding-top: 80px">
+    <div class="grid-x grid-padding-x">
+      <div class="large-4 cell">
+        <div class="row">
+          <div class="medium-12 columns">
+            <ul class="tabbed-search tabs">
+              <li class="tabs-title is-active"><a href="#deposit" aria-selected="true">Deposit</a></li>
+             </ul>
+          </div>
+        </div>
+        <div class="tabbed-search-content tabs-content" data-tabs-content="tabbed-search">
+          <div class="tabs-panel is-active" id="deposit">
+            <form>
+              <div class="row">
+                <div class="small-12 medium-2 columns">
+                  <label>
+                    <input id="deposit-amount" type="number" placeholder="amount">
+                  </label>
+                </div>
+                <div class="small-12 medium-2 columns">
+                  <label>
+                    <select>
+                      <option value="near" selected>near</option>
+                      <option value="coin.sandbox.depositum.testnet">coin</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="small-12 medium-2 columns">
+                  <button type="button" class="success button expanded search-button">
+                    <i class="fa fa-search"></i><span>Deposit</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="large-4 cell">
+        <div class="row">
+          <div class="medium-12 columns">
+            <ul class="tabbed-search tabs" data-tabs id="tabbed-search">
+              <li class="tabs-title is-active"><a href="#withdrawal" aria-selected="true">Withdrawal</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="tabbed-search-content tabs-content" data-tabs-content="tabbed-search">
+          <div class="tabs-panel is-active" id="withdrawal">
+            <form>
+              <div class="row">
+                <div class="small-12 medium-2 columns">
+                  <label>
+                    <input id="withdrawal-amount" type="number" placeholder="amount">
+                  </label>
+                </div>
+                <div class="small-12 medium-2 columns">
+                  <label>
+                    <select id="coin">
+                      <option value="near" selected>near</option>
+                      <option value="coin.sandbox.depositum.testnet">coin</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="small-12 medium-2 columns">
+                  <button type="button" class="primary button expanded search-button">
+                    <i class="fa fa-search"></i><span>Withdrawal</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="large-4 cell">
+        <div class="row">
+          <div class="medium-12 columns">
+            <ul class="tabbed-search tabs" data-tabs>
+              <li class="tabs-title is-active"><a href="#strategy" aria-selected="true">Strategy</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="tabbed-search-content tabs-content" data-tabs-content="tabbed-search">
+          <div class="tabs-panel is-active" id="strategy">
+            <form>
+              <div class="row">
+                <div class="small-12 medium-2 columns">
+                  <label>
+                    <input id="strategy-amount" type="number" placeholder="amount">
+                  </label>
+                </div>
+                <div class="small-12 medium-2 columns">
+                  <label>
+                    <select>
+                      <option value="ref.finance" selected>ref.finance</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="small-12 medium-2 columns">
+                  <button type="button" class="warning button expanded search-button">
+                    <i class="fa fa-search"></i><span>Supply</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
   </div>
