@@ -1,7 +1,6 @@
 [workspace]
 members = [
     "src/contract/simple_token",
-    "src/contract/counter",
     "src/contract/depositum",
     "src/contract/ref_farming_strategy",
 ]
