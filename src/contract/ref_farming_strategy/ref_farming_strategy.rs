@@ -20,7 +20,7 @@ construct_uint! {
 }
 
 #[cfg(all(test, not(target_arch = "wasm32")))]
-mod sim_tests;
+mod simulator;
 
 const RESERVE_TGAS: Gas = Gas(20_000_000_000_000);
 const DEPOSIT_CALL_GAS: Gas = Gas(35_000_000_000_000);
@@ -93,8 +93,8 @@ pub trait FtToken {
 
 #[ext_contract(ref_exchange)]
 pub trait ExtRefExchane {
-    fn get_pool(&mut self, pool_id: u64) -> PoolInfo;
-    fn storage_balance_of(&mut self, account_id: AccountId) -> Option<StorageBalance>;
+    fn get_pool(&self, pool_id: u64) -> PoolInfo;
+    fn storage_balance_of(&self, account_id: AccountId) -> Option<StorageBalance>;
     fn storage_deposit(
         &mut self,
         account_id: AccountId,
@@ -166,7 +166,7 @@ impl RefFarmingStrategy {
         require!(amount.0 > 0, "Empty amount");
         let strategy = Strategy { token, amount };
         let strategy_id = self.internal_add_strategy(strategy.clone());
-        self.farm(strategy.clone());
+        self.farm(strategy);
         strategy_id
     }
 
@@ -280,18 +280,21 @@ impl RefFarmingStrategy {
     #[private]
     pub fn calc_swap_amount_out(
         &mut self,
-        amount_in: u128,
-        pool_info: &PoolInfo,
+        amount_in: U128,
+        pool_info: PoolInfo,
         slippage: u32,
-    ) -> u128 {
+    ) -> U128 {
+        let amount_in: u128 = amount_in.into();
         let in_balance = U256::from(pool_info.amounts.get(0).unwrap().0);
         let out_balance = U256::from(pool_info.amounts.get(1).unwrap().0);
 
         let amount_with_fee =
             U256::from(amount_in) * U256::from(FEE_DIVISOR - pool_info.total_fee + slippage); // todo calculate slippage in othe way
-
-        (amount_with_fee * out_balance / (U256::from(FEE_DIVISOR) * in_balance + amount_with_fee))
-            .as_u128()
+        U128(
+            (amount_with_fee * out_balance
+                / (U256::from(FEE_DIVISOR) * in_balance + amount_with_fee))
+                .as_u128(),
+        )
     }
 
     #[private]
@@ -323,7 +326,9 @@ impl RefFarmingStrategy {
                 );
 
                 let amount_in = strategy.amount.0 / 2;
-                let min_amount_out = self.calc_swap_amount_out(amount_in, &pool_info, 10);
+                let min_amount_out = self
+                    .calc_swap_amount_out(U128(amount_in), pool_info, 10)
+                    .into();
                 log!("calculated min amount out {}", min_amount_out);
                 log!(
                     "calculated amount in: {}, min amount out: {}",
@@ -523,7 +528,7 @@ impl RefFarmingStrategy {
         ]
     }
 
-    pub fn get_strategy(self, id: U64) -> Strategy {
+    pub fn get_strategy(&self, id: U64) -> Strategy {
         self.strategies.get(id.0).expect("ERR_NO_STRATEGY")
     }
 
@@ -567,7 +572,7 @@ impl FungibleTokenReceiver for RefFarmingStrategy {
         amount: U128,
         msg: String,
     ) -> PromiseOrValue<U128> {
-        log!("ft_on_transfer");
+        log!("ft_on_transfer {} {} {}", sender_id, amount.0, msg);
         PromiseOrValue::Value(U128(0))
     }
 }

@@ -50,7 +50,3 @@ cd "$ROOT_PATH"
 build depositum
 build simple_token
 build ref_farming_strategy
-
-# FIXME setup not root user in docker
-HOST_OWNER=${HOST_OWNER:-"$(id -u):$(id -g)"}
-chown "$HOST_OWNER" -R "$ROOT_PATH"
