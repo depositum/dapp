@@ -3,11 +3,8 @@ use near_sdk::test_utils::*;
 use near_sdk_sim::*;
 use simple_token::*;
 
-lazy_static_include::lazy_static_include_bytes! {
-    CONTRACT_SIMPLE_TOKEN => "../../../build/simple_token.wasm",
-    CONTRACT_DEPOSITUM => "../../../build/depositum.wasm",
-}
-
+static CONTRACT_SIMPLE_TOKEN: &[u8] = include_bytes!("../../../build/simple_token.wasm");
+static CONTRACT_DEPOSITUM: &[u8] = include_bytes!("../../../build/depositum.wasm");
 const CONTRACT_ID: &str = "depositum";
 const COIN_ID: &str = "coin";
 
@@ -20,14 +17,14 @@ fn init() -> (
     let contract = deploy!(
         contract: DepositumContract,
         contract_id: CONTRACT_ID.to_string(),
-        bytes: &CONTRACT_DEPOSITUM,
+        bytes: CONTRACT_DEPOSITUM,
         signer_account: root,
         init_method: new()
     );
     let coin = deploy!(
         contract: SimpleTokenContract,
         contract_id: COIN_ID.to_string(),
-        bytes: &CONTRACT_SIMPLE_TOKEN,
+        bytes: CONTRACT_SIMPLE_TOKEN,
         signer_account: root,
         init_method: new(None, None)
     );

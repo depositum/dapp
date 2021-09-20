@@ -2,10 +2,7 @@ use crate::*;
 use near_sdk::test_utils::*;
 use near_sdk_sim::*;
 
-lazy_static_include::lazy_static_include_bytes! {
-    CONTRACT_REF_FARMING_STRATEGY => "../../../build/ref_farming_strategy.wasm",
-}
-
+static CONTRACT_STRATEGY: &[u8] = include_bytes!("../../../build/ref_farming_strategy.wasm");
 const CONTRACT_ID: &str = "ref_frarming_strategy";
 const TOKEN_ID: &str = "token.testnear";
 
@@ -17,7 +14,7 @@ fn init() -> (
     let contract = deploy!(
         contract: RefFarmingStrategyContract,
         contract_id: CONTRACT_ID.to_string(),
-        bytes: &CONTRACT_REF_FARMING_STRATEGY,
+        bytes: CONTRACT_STRATEGY,
         signer_account: root,
         init_method: new(
             AccountId::new_unchecked("executor.near".to_string()),
