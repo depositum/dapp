@@ -47,7 +47,6 @@ build() {
 }
 
 cd "$ROOT_PATH"
-build counter
 build depositum
 build simple_token
 build ref_farming_strategy
