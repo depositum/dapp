@@ -1,0 +1,8 @@
+version: "3.9"
+services:
+  builder:
+    build: .docker/builder
+    image: ghcr.io/depositum/dapp/builder:latest
+    volumes:
+      - .:/code
+    command: make qa

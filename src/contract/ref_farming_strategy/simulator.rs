@@ -36,17 +36,18 @@ fn init() -> (
     (contract, user_list)
 }
 
-// #[test]
+#[test]
+#[ignore] // FIXME
 fn farm() {
     let (contract, _user) = init();
+
+    // initialized
+    call!(contract.user_account, contract.init()).assert_success();
 
     // create first strategy
     let res = call!(
         contract.user_account,
-        contract.create(
-            AccountId::new_unchecked(TOKEN_ID.to_string()),
-            U128::from(100)
-        )
+        contract.supply(AccountId::new_unchecked(TOKEN_ID.to_string()), U128(100))
     );
 
     let strategy_id: U64 = res.unwrap_json();
@@ -56,7 +57,7 @@ fn farm() {
 
     let res = call!(
         contract.user_account,
-        contract.create(
+        contract.supply(
             AccountId::new_unchecked(TOKEN_ID.to_string()),
             U128::from(100)
         )
@@ -77,8 +78,8 @@ fn calc_swap_amount_out() {
     let res = call!(
         contract.user_account,
         contract.calc_swap_amount_out(
-            100,
-            &PoolInfo {
+            U128(100),
+            PoolInfo {
                 pool_kind: "Simple_pool".to_string(),
                 /// List of tokens in the pool.
                 token_account_ids: vec![],
@@ -92,7 +93,7 @@ fn calc_swap_amount_out() {
             10
         )
     );
-
+    res.assert_success();
     // check first condition
-    assert_eq!(res.unwrap_json_value(), 0);
+    assert_eq!("99".to_string(), res.unwrap_json_value());
 }

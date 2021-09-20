@@ -2,16 +2,22 @@ SHELL=bash
 YOCTO=0.000000000000000000000001
 -include neardev/dev-account.env
 -include .env
+
+build_docker:
+	docker-compose --file docker-builder.yml build
+deploy_docker: build_docker
+	docker push ghcr.io/depositum/dapp/builder:latest
 in_docker_%:
-	bash src/contract/build_in_docker.sh make $*
+	docker-compose --file docker-builder.yml run --rm builder make $*
 
 clean_build:
 	rm -fr build
 
 clean: clean_build
+	rm -fr .cache
 	cargo clean
 
-lint:
+lint_contract: stub_contract
 	cargo fmt --all -- --check
 	cargo clippy --all-targets
 
@@ -24,39 +30,38 @@ audit_fix:
 audit:
 	cargo audit
 
-test_contract_integration: build
+test_contract_integration: rebuild_contract
 	cargo test --lib simulator
 
-test_contract_unit:
+test_contract_unit: stub_contract
 	cargo test --lib unit
 
 test_contract:\
-test_contract_integration \
-test_contract_unit
+test_contract_unit \
+test_contract_integration
 
 test:\
 test_contract
 
+stub_contract:
+	mkdir -p build
+	touch build/simple_token.wasm
+	touch build/depositum.wasm
+	touch build/ref_farming_strategy.wasm
+
 qa:\
-lint \
+lint_contract \
 test
 
 fix:\
-audit-fix\
+audit_fix\
 fmt
-
-rustup:
-	rustup component add clippy
-	rustup component add rustfmt
-	rustup component add rust-src
-	rustup target add wasm32-unknown-unknown
-	cargo install cargo-audit --features=fix
 
 check:
 	cargo check
-build:
+build_contract:
 	bash src/contract/build.sh
-rebuild: clean_build build
+rebuild_contract: clean_build build_contract
 near_deploy_delete:
 	near delete ${CONTRACT_NAME} ${NEAR_DEV_ACCOUNT} || exit 0
 	rm -fr neardev
