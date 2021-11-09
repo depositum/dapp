@@ -13,6 +13,7 @@ use near_sdk::{env, PromiseOrValue};
 use near_sdk::{ext_contract, Gas, PromiseResult};
 use near_sdk::{log};
 use std::collections::HashMap;
+use near_sdk::{Promise};
 use uint::construct_uint;
 
 construct_uint! {
@@ -182,6 +183,14 @@ impl RefFarmingStrategy {
             strategies: Vector::new(StorageKey::Strategies),
             is_initialized: false,
         }
+    }
+
+    pub fn delete(&self) -> Promise {
+        require!(
+            self.executor == env::predecessor_account_id(),
+            "Need permission"
+        );
+        Promise::new(env::current_account_id()).delete_account(env::predecessor_account_id())
     }
 
     /*
