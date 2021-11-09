@@ -77,7 +77,12 @@ pub trait ExtSelf {
         attached_deposit: U128,
         predecessor_account_id: AccountId,
     ) -> bool;
-    fn callback_ft_transfer_call(&mut self, sub_account_id: AccountId, account_id: AccountId, amount: U128);
+    fn callback_ft_transfer_call(
+        &mut self,
+        sub_account_id: AccountId,
+        account_id: AccountId,
+        amount: U128,
+    );
 }
 
 #[ext_contract(ft_token)]
@@ -151,7 +156,10 @@ impl Depositum {
     ) -> U128 {
         require!(amount.0 > 0, "Empty amount");
         log!("deposit_update");
-        let mut account = self.account.get(&beneficiary.clone()).expect("account not found");
+        let mut account = self
+            .account
+            .get(&beneficiary.clone())
+            .expect("account not found");
 
         let deposit = match account.get(coin) {
             None => amount.0,
@@ -159,11 +167,7 @@ impl Depositum {
         };
         account.insert(coin, &deposit);
         self.account.insert(&beneficiary.clone(), &account);
-        log!(
-            "deposit updated {} for {}",
-            deposit,
-            beneficiary,
-        );
+        log!("deposit updated {} for {}", deposit, beneficiary,);
         U128(deposit)
     }
 
@@ -281,14 +285,15 @@ impl Depositum {
     }
 
     #[payable]
-    pub fn start_strategy(account_id: AccountId, sub_account_id: AccountId, amount: U128) -> Promise {
+    pub fn start_strategy(
+        account_id: AccountId,
+        sub_account_id: AccountId,
+        amount: U128,
+    ) -> Promise {
         let gas_for_next_callback =
             env::prepaid_gas() - env::used_gas() - DEPOSIT_CALL_GAS - RESERVE_TGAS;
 
-        log!(
-            "start_strategy, prepaid_gas {:?}",
-            env::prepaid_gas()
-        );
+        log!("start_strategy, prepaid_gas {:?}", env::prepaid_gas());
         ft_token::ft_transfer_call(
             sub_account_id.clone(),
             amount,
@@ -308,7 +313,12 @@ impl Depositum {
     }
 
     #[private]
-    pub fn callback_ft_transfer_call(&mut self, sub_account_id: AccountId, account_id: AccountId, amount: U128) {
+    pub fn callback_ft_transfer_call(
+        &mut self,
+        sub_account_id: AccountId,
+        account_id: AccountId,
+        amount: U128,
+    ) {
         log!(
             "callback_ft_transfer_call, prepaid_gas {:?}",
             env::prepaid_gas()

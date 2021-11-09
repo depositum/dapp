@@ -3,7 +3,6 @@ use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::Vector;
 use near_sdk::json_types::U128;
 use near_sdk::json_types::U64;
-use near_sdk::{Balance, log, Promise};
 use near_sdk::near_bindgen;
 use near_sdk::require;
 use near_sdk::serde::{Deserialize, Serialize};
@@ -12,6 +11,7 @@ use near_sdk::BorshStorageKey;
 use near_sdk::PanicOnDefault;
 use near_sdk::{env, PromiseOrValue};
 use near_sdk::{ext_contract, Gas, PromiseResult};
+use near_sdk::{log, Balance, Promise};
 use uint::construct_uint;
 
 construct_uint! {
@@ -160,8 +160,11 @@ impl RefFarmingStrategy {
         }
     }
 
-    pub fn delete(&self)  -> Promise {
-        require!(self.executor == env::predecessor_account_id(), "Need permission");
+    pub fn delete(&self) -> Promise {
+        require!(
+            self.executor == env::predecessor_account_id(),
+            "Need permission"
+        );
         Promise::new(env::current_account_id()).delete_account(env::predecessor_account_id())
     }
 
@@ -482,7 +485,7 @@ impl RefFarmingStrategy {
 
         log!("swap amount out {:?}", swapped_amount);
         require!(swapped_amount.0 > 0, "Not succefull swap");
-        let pool_id = 2;  // todo get proper pool id
+        let pool_id = 2; // todo get proper pool id
         ref_exchange::add_liquidity(
             env::current_account_id(),
             vec![amount_in, swapped_amount],
@@ -509,7 +512,7 @@ impl RefFarmingStrategy {
             env::prepaid_gas() - env::used_gas() - GET_DATA_TGAS - RESERVE_TGAS;
         log!("step 5, gas_for_next_callback: {:?}", gas_for_next_callback);
 
-        let pool_id = ":2".to_string();  // token id
+        let pool_id = ":2".to_string(); // token id
 
         ref_exchange::mft_balance_of(
             pool_id,
@@ -517,7 +520,8 @@ impl RefFarmingStrategy {
             self.ref_exchange_account.clone(),
             1,
             GET_DATA_TGAS,
-        ).then(ext_self::callback_liquidity_shares_balance(
+        )
+        .then(ext_self::callback_liquidity_shares_balance(
             strategy,
             env::current_account_id(),
             0,
@@ -527,7 +531,6 @@ impl RefFarmingStrategy {
 
     #[private]
     pub fn callback_liquidity_shares_balance(&mut self, strategy: Strategy) {
-
         log!("callback_add_liquidity {:?}", strategy.amount);
 
         log!("step 6, used_gas {:?}", env::used_gas());
@@ -536,7 +539,7 @@ impl RefFarmingStrategy {
             env::prepaid_gas() - env::used_gas() - MFT_TRANSFER_AND_CALL_TGAS - RESERVE_TGAS;
         log!("step 6, gas_for_next_callback: {:?}", gas_for_next_callback);
 
-        let pool_id = ":2".to_string();  // token id
+        let pool_id = ":2".to_string(); // token id
 
         let liquidity_shares: U128 = match env::promise_result(0) {
             PromiseResult::NotReady => unreachable!(),
@@ -555,8 +558,8 @@ impl RefFarmingStrategy {
             pool_id,
             self.ref_farming_account.clone(), // receiver id
             liquidity_shares,
-            None,                             // memo
-            "".to_string(),                   // msg
+            None,           // memo
+            "".to_string(), // msg
             self.ref_exchange_account.clone(),
             1,
             MFT_TRANSFER_AND_CALL_TGAS,
