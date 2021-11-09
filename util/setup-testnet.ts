@@ -111,7 +111,6 @@ async function createTokens() {
             console.log('[SETUP] contract deployed:', { transactionId: result.outcome.transactionId, });
         } catch (err) { }
     }
-
 }
 
 async function deleteAccounts(accounts: string[]) {
@@ -146,7 +145,6 @@ async function createRefExchangeContract() {
             });
         } catch (err) { }
     }
-
 }
 
 async function createRefFarmingContract() {
@@ -216,7 +214,7 @@ async function mintTokens(accounts: string[]) {
         console.log(`${accId} usd balance: ${balance}`);
         if (balance === '0') {
             try {
-                const amount = '10000000000000000000';
+                const amount = '1000000000000000000000000000000';
                 const res = await usdToken.callRaw({
                     methodName: 'mint',
                     args: { account_id: accId, amount }
@@ -273,7 +271,7 @@ async function whitelistTokensInRef() {
 
     const res = await refContract.callRaw<any>({
         methodName: 'extend_whitelisted_tokens',
-        args: { tokens: [USD_TOKEN_ACC_NAME, WNEAR_TOKEN_ACC_NAME] },
+        args: { tokens: [USD_TOKEN_ACC_NAME, 'wrap_near-aromankov.testnet'] },
         attachedDeposit: '0.000000000000000000000001',
     });
     console.log(`register_tokens response`, res);
@@ -294,7 +292,7 @@ async function addPool() {
 async function createSimpleFarm() {
     console.log('[SETUP] CREATE SIMPLE FARM');
 
-    const ownerAcc = near.custodianAccount(REF_EXCHANGE_ACC_NAME);
+    const ownerAcc = near.custodianAccount(ALICE_ACC_NAME);
     const farmingContract = await near.Contract.connect(near.Contract, REF_FARMING_ACC_NAME, ownerAcc);
 
     const meta = await farmingContract.call<any>({
@@ -307,11 +305,11 @@ async function createSimpleFarm() {
     // }
 
     const terms = {
-        seed_id: `${REF_EXCHANGE_ACC_NAME}@0`,
+        seed_id: `${REF_EXCHANGE_ACC_NAME}@2`,
         reward_token: USD_TOKEN_ACC_NAME,
         start_at: 0,
-        reward_per_session: '1',
-        session_interval: 60,
+        reward_per_session: '100000000000000000000',
+        session_interval: 10,
     };
 
     const res = await farmingContract.callRaw<any>({
@@ -324,13 +322,13 @@ async function createSimpleFarm() {
 
 async function addLiquidityToPool() {
     // near call $CONTRACT_ID add_liquidity '{"pool_id": 0, "amounts": ["10000", "10000"]}' --accountId $USER_ID --amount 0.000000000000000000000001
-    const acc = near.custodianAccount(BOB_ACC_NAME);
+    const acc = near.custodianAccount(ALICE_ACC_NAME);
     const refContract = await near.Contract.connect(near.Contract, REF_EXCHANGE_ACC_NAME, acc);
 
     const res = await refContract.callRaw<any>({
         methodName: 'add_liquidity',
         args: {
-            pool_id: 0,
+            pool_id: 1,
             amounts: ['100000', '100000']
         },
         attachedDeposit: '0.1',
@@ -375,9 +373,24 @@ async function withdraw(account: string, token: string, amount: string) {
     console.log(`withdraw response`, res);
 }
 
+
+async function wrapNear() {
+    for (const tokenAccId of ['wrap_near-aromankov.testnet']) {
+        for (const userAccId of [ALICE_ACC_NAME]) {
+            const acc = near.custodianAccount(userAccId);
+            const tokenContract = await near.Contract.connect(near.Contract, tokenAccId, acc);
+            const res = await tokenContract.call<any>({
+                methodName: 'near_deposit',
+                args: {},
+                attachedDeposit: '2',
+            });
+            console.log(`${tokenAccId} wrapNear for ${userAccId}`, res);
+        }
+    }
+}
 async function transferTokensToRefContract() {
-    for (const tokenAccId of [USD_TOKEN_ACC_NAME, WNEAR_TOKEN_ACC_NAME]) {
-        for (const userAccId of [ALICE_ACC_NAME, BOB_ACC_NAME]) {
+    for (const tokenAccId of [USD_TOKEN_ACC_NAME, 'wrap_near-aromankov.testnet']) {
+        for (const userAccId of [ALICE_ACC_NAME]) {
             const acc = near.custodianAccount(userAccId);
             const tokenContract = await near.Contract.connect(near.Contract, tokenAccId, acc);
             const res = await tokenContract.call<any>({
@@ -402,7 +415,7 @@ async function mftRegister() {
     const res = await finance.call<any>({
         methodName: 'mft_register',
         args: {
-            token_id: ':0',
+            token_id: ':2',
             account_id: REF_FARMING_ACC_NAME,
         },
         attachedDeposit: '0.1',
@@ -504,7 +517,7 @@ async function main() {
     console.log('[SETUP] IN PROGRESS');
 
     // await deleteAccounts([
-    //     ALICE_ACC_NAME, WNEAR_TOKEN_ACC_NAME, BOB_ACC_NAME, REF_FINANCE_ACC_NAME, USD_TOKEN_ACC_NAME
+    //     ALICE_ACC_NAME, WNEAR_TOKEN_ACC_NAME, BOB_ACC_NAME, REF_EXCHANGE_ACC_NAME, USD_TOKEN_ACC_NAME
     //     ,REF_FARMING_ACC_NAME
     // ]);
 
@@ -547,16 +560,18 @@ async function main() {
         await printFarmingUserSeeds(REF_EXCHANGE_ACC_NAME);
     };
 
-    await init();
-    await accountActions();
-    await initFarming();
+    // await init();
+    // await accountActions();
+    // await initFarming();
 
+    // await wrapNear();
+    // await transferTokensToRefContract();
+    // await addLiquidityToPool();
+    // await prepareAccounts([FARMING_ACC_NAME]);
+    await mintTokens(['dep_1.testnet']);
+    // await mftRegister();
 
-    await prepareAccounts([FARMING_ACC_NAME]);
-    await mintTokens([FARMING_ACC_NAME]);
-
-
-
+    // await createSimpleFarm();
     // await swap(BOB_ACC_NAME);
     // await withdraw(BOB_ACC_NAME, USD_TOKEN_ACC_NAME, '1000');
 

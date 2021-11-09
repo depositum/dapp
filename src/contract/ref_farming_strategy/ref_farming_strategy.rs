@@ -3,7 +3,7 @@ use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::Vector;
 use near_sdk::json_types::U128;
 use near_sdk::json_types::U64;
-use near_sdk::log;
+use near_sdk::{Balance, log};
 use near_sdk::near_bindgen;
 use near_sdk::require;
 use near_sdk::serde::{Deserialize, Serialize};
@@ -19,16 +19,17 @@ construct_uint! {
     pub struct U256(4);
 }
 
-#[cfg(all(test, not(target_arch = "wasm32")))]
-mod simulator;
-
-const RESERVE_TGAS: Gas = Gas(20_000_000_000_000);
+const RESERVE_TGAS: Gas = Gas(15_000_000_000_000);
 const DEPOSIT_CALL_GAS: Gas = Gas(35_000_000_000_000);
 const THIRTY_TGAS: Gas = Gas(30_000_000_000_000);
-const MFT_TRANSFER_AND_CALL_TGAS: Gas = Gas(70_000_000_000_000);
+const SWAP_TGAS: Gas = Gas(10_000_000_000_000);
+const MFT_TRANSFER_AND_CALL_TGAS: Gas = Gas(60_000_000_000_000);
 const TWENTY_TGAS: Gas = Gas(20_000_000_000_000);
+const TEN_TGAS: Gas = Gas(10_000_000_000_000);
+const GET_DATA_TGAS: Gas = Gas(3_000_000_000_000);
 const FEE_DIVISOR: u32 = 10_000;
-const STORAGE_DEPOSIT_NEARS: u128 = 1_250_000_000_000_000_000_000;
+// const STORAGE_DEPOSIT_NEARS: u128 = 1_250_000_000_000_000_000_000;
+const STORAGE_DEPOSIT_NEARS: u128 = 250_000_000_000_000_000_000_000;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(crate = "near_sdk::serde")]
@@ -79,6 +80,7 @@ pub trait RefFinancePostActions {
     fn callback_ft_transfer_call(&mut self, strategy: Strategy);
     fn callback_add_liquidity(&mut self, strategy: Strategy);
     fn callback_mft_transfer_call(&mut self, strategy: Strategy);
+    fn callback_liquidity_shares_balance(&mut self, strategy: Strategy);
 }
 
 #[ext_contract(ft_token)]
@@ -110,6 +112,7 @@ pub trait ExtRefExchane {
         memo: Option<String>,
         msg: String,
     ) -> PromiseOrValue<U128>;
+    fn mft_balance_of(&self, token_id: String, account_id: AccountId) -> U128;
 }
 
 #[derive(BorshStorageKey, BorshSerialize)]
@@ -162,6 +165,8 @@ impl RefFarmingStrategy {
     */
     pub fn supply(&mut self, token: AccountId, amount: U128) -> U64 {
         log!("create strategy for token: {}", token);
+        log!("step 0, prepaid_gas {:?}", env::prepaid_gas());
+
         require!(self.is_initialized, "Contract not initialized");
         require!(amount.0 > 0, "Empty amount");
         let strategy = Strategy { token, amount };
@@ -240,6 +245,7 @@ impl RefFarmingStrategy {
     5. send wnear to depositium contract
     */
     pub fn redeem() {
+        // 
         // TODO implement me, please
     }
 
@@ -255,16 +261,16 @@ impl RefFarmingStrategy {
 
         if is_success {
             // todo init in constructor
-            let pool_id = 0;
+            let pool_id = 2;
 
             let gas_for_next_callback =
-                env::prepaid_gas() - TWENTY_TGAS - env::used_gas() - RESERVE_TGAS;
+                env::prepaid_gas() - GET_DATA_TGAS - env::used_gas() - RESERVE_TGAS;
 
             log!("step 2, gas_for_next_callback: {:?}", gas_for_next_callback);
             log!("step 2, used_gas {:?}", env::used_gas());
             log!("step 2, prepaid_gas {:?}", env::prepaid_gas());
 
-            ref_exchange::get_pool(pool_id, self.ref_exchange_account.clone(), 0, TWENTY_TGAS)
+            ref_exchange::get_pool(pool_id, self.ref_exchange_account.clone(), 0, GET_DATA_TGAS)
                 .then(ext_self::callback_get_pool(
                     strategy,
                     env::current_account_id(),
@@ -313,10 +319,11 @@ impl RefFarmingStrategy {
         match pool_info {
             Some(pool_info) => {
                 // todo init in constructor
-                let pool_id = 0;
+                let pool_id = 2;
 
                 let first_token_amount = pool_info.amounts.get(0).unwrap();
                 let second_token_amount = pool_info.amounts.get(1).unwrap();
+                
                 let total_fee = pool_info.total_fee;
                 log!(
                     "received pool info {:?} {:?} {}",
@@ -326,7 +333,7 @@ impl RefFarmingStrategy {
                 );
 
                 let amount_in = strategy.amount.0 / 2;
-                let min_amount_out = self
+                let min_amount_out: u128 = self
                     .calc_swap_amount_out(U128(amount_in), pool_info, 10)
                     .into();
                 log!("calculated min amount out {}", min_amount_out);
@@ -339,14 +346,15 @@ impl RefFarmingStrategy {
                 // todo check balance
                 let swap_action = SwapAction {
                     pool_id,
-                    token_in: AccountId::new_unchecked("usdc-strategy.testnet".to_string()),
+                    token_in: AccountId::new_unchecked("wrap_near-aromankov.testnet".to_string()),
                     amount_in: U128(amount_in),
-                    token_out: AccountId::new_unchecked("wnear-strategy.testnet".to_string()),
-                    min_amount_out: U128(min_amount_out),
+                    token_out: AccountId::new_unchecked("usdc-aromankov.testnet".to_string()),
+                    min_amount_out: U128(1),
                 };
 
+                // SWAP_TGAS changed from thirty gas
                 let gas_for_next_callback =
-                    env::prepaid_gas() - env::used_gas() - THIRTY_TGAS - RESERVE_TGAS;
+                    env::prepaid_gas() - env::used_gas() - SWAP_TGAS - RESERVE_TGAS;
 
                 log!("step 3, gas_for_next_callback: {:?}", gas_for_next_callback);
                 log!("step 3, used_gas {:?}", env::used_gas());
@@ -357,7 +365,7 @@ impl RefFarmingStrategy {
                     None,
                     self.ref_exchange_account.clone(),
                     STORAGE_DEPOSIT_NEARS,
-                    THIRTY_TGAS,
+                    SWAP_TGAS,
                 )
                 .then(ext_self::callback_swap(
                     strategy,
@@ -469,11 +477,11 @@ impl RefFarmingStrategy {
 
         log!("swap amount out {:?}", swapped_amount);
         require!(swapped_amount.0 > 0, "Not succefull swap");
-
+        let pool_id = 2;  // todo get proper pool id
         ref_exchange::add_liquidity(
             env::current_account_id(),
             vec![amount_in, swapped_amount],
-            0, // todo get proper pool id
+            pool_id,
             self.ref_exchange_account.clone(),
             STORAGE_DEPOSIT_NEARS,
             TWENTY_TGAS,
@@ -490,16 +498,58 @@ impl RefFarmingStrategy {
     pub fn callback_add_liquidity(&mut self, strategy: Strategy) {
         log!("callback_add_liquidity {:?}", strategy.amount);
 
-        let gas_for_next_callback =
-            env::prepaid_gas() - env::used_gas() - MFT_TRANSFER_AND_CALL_TGAS - RESERVE_TGAS;
-        log!("step 5, gas_for_next_callback: {:?}", gas_for_next_callback);
         log!("step 5, used_gas {:?}", env::used_gas());
         log!("step 5, prepaid_gas {:?}", env::prepaid_gas());
+        let gas_for_next_callback =
+            env::prepaid_gas() - env::used_gas() - GET_DATA_TGAS - RESERVE_TGAS;
+        log!("step 5, gas_for_next_callback: {:?}", gas_for_next_callback);
+        
+        let pool_id = ":2".to_string();  // token id
+
+        ref_exchange::mft_balance_of(
+            pool_id,
+            env::current_account_id(),
+            self.ref_exchange_account.clone(),
+            1,
+            GET_DATA_TGAS,
+        ).then(ext_self::callback_liquidity_shares_balance(
+            strategy,
+            env::current_account_id(),
+            0,
+            gas_for_next_callback,
+        ));
+    }
+
+    #[private]
+    pub fn callback_liquidity_shares_balance(&mut self, strategy: Strategy) {
+
+        log!("callback_add_liquidity {:?}", strategy.amount);
+
+        log!("step 6, used_gas {:?}", env::used_gas());
+        log!("step 6, prepaid_gas {:?}", env::prepaid_gas());
+        let gas_for_next_callback =
+            env::prepaid_gas() - env::used_gas() - MFT_TRANSFER_AND_CALL_TGAS - RESERVE_TGAS;
+        log!("step 6, gas_for_next_callback: {:?}", gas_for_next_callback);
+
+        let pool_id = ":2".to_string();  // token id
+
+        let liquidity_shares: U128 = match env::promise_result(0) {
+            PromiseResult::NotReady => unreachable!(),
+            PromiseResult::Successful(value) => {
+                if let Ok(shares) = near_sdk::serde_json::from_slice::<U128>(&value) {
+                    shares
+                } else {
+                    U128(0)
+                }
+            }
+            PromiseResult::Failed => U128(0),
+        };
+        log!("received liquidity shares: {:?}", liquidity_shares);
 
         ref_exchange::mft_transfer_call(
-            ":0".to_string(),                 // token id
+            pool_id,                
             self.ref_farming_account.clone(), // receiver id
-            U128(100),                        // amount, todo remove hardcode
+            liquidity_shares,                  
             None,                             // memo
             "".to_string(),                   // msg
             self.ref_exchange_account.clone(),
@@ -518,7 +568,7 @@ impl RefFarmingStrategy {
     pub fn callback_mft_transfer_call(&mut self, strategy: Strategy) {
         log!("callback_mft_transfer_call {:?}", strategy.amount);
 
-        log!("step 6, gas left: {:?}", env::prepaid_gas());
+        log!("step 7, gas left: {:?}", env::prepaid_gas());
     }
 
     pub fn accounts_list(&self) -> Vec<AccountId> {

@@ -1,6 +1,7 @@
 /target
 /out
 /neardev
+src/contract/depositum/neardev
 .secrets
 node_modules
 testnet.env
@@ -10,4 +11,5 @@ build
 
 src/contract/ref_farming_strategy/target
 src/contract/counter/target
+src/contract/testing/target
 src/web/asset/icon

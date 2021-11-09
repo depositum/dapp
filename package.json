@@ -20,7 +20,7 @@
     "setup-env-1": "ts-node util/setup-env-s1",
     "setup-env-2": "ts-node util/setup-env-s2",
     "setup-near": "ts-node util/setup",
-    "setup-testnet": "ts-node util/setup-testnet",
+    "setup-testnet": "NEAR_ENV=testnet ts-node util/setup-testnet",
     "setup": "yarn up && yarn setup-near",
     "up": "yarn down && docker-compose up --detach",
     "down": "docker-compose down --volumes",
@@ -41,5 +41,8 @@
     "pwa-asset-generator": "^4.3.6",
     "ts-node": "^10.2.1",
     "typescript": "<4.4.0"
+  },
+  "dependencies": {
+    "dotenv": "^10.0.0"
   }
 }

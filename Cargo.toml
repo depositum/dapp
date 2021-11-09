@@ -5,6 +5,10 @@ members = [
     "src/contract/ref_farming_strategy",
 ]
 
+exclude = [
+    "src/contract/testing"
+]
+
 [profile.release]
 codegen-units = 1
 # Tell `rustc` to optimize for small code size.
