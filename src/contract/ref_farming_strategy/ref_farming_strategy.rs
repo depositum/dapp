@@ -3,7 +3,7 @@ use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::Vector;
 use near_sdk::json_types::U128;
 use near_sdk::json_types::U64;
-use near_sdk::{Balance, log};
+use near_sdk::{Balance, log, Promise};
 use near_sdk::near_bindgen;
 use near_sdk::require;
 use near_sdk::serde::{Deserialize, Serialize};
@@ -160,6 +160,11 @@ impl RefFarmingStrategy {
         }
     }
 
+    pub fn delete(&self)  -> Promise {
+        require!(self.executor == env::predecessor_account_id(), "Need permission");
+        Promise::new(env::current_account_id()).delete_account(env::predecessor_account_id())
+    }
+
     /*
      1. добавить проверку токен, убедиться что мы поддерживаем и знаем как работать с этим токеном
     */
@@ -245,7 +250,7 @@ impl RefFarmingStrategy {
     5. send wnear to depositium contract
     */
     pub fn redeem() {
-        // 
+        //
         // TODO implement me, please
     }
 
@@ -323,7 +328,7 @@ impl RefFarmingStrategy {
 
                 let first_token_amount = pool_info.amounts.get(0).unwrap();
                 let second_token_amount = pool_info.amounts.get(1).unwrap();
-                
+
                 let total_fee = pool_info.total_fee;
                 log!(
                     "received pool info {:?} {:?} {}",
@@ -503,7 +508,7 @@ impl RefFarmingStrategy {
         let gas_for_next_callback =
             env::prepaid_gas() - env::used_gas() - GET_DATA_TGAS - RESERVE_TGAS;
         log!("step 5, gas_for_next_callback: {:?}", gas_for_next_callback);
-        
+
         let pool_id = ":2".to_string();  // token id
 
         ref_exchange::mft_balance_of(
@@ -547,9 +552,9 @@ impl RefFarmingStrategy {
         log!("received liquidity shares: {:?}", liquidity_shares);
 
         ref_exchange::mft_transfer_call(
-            pool_id,                
+            pool_id,
             self.ref_farming_account.clone(), // receiver id
-            liquidity_shares,                  
+            liquidity_shares,
             None,                             // memo
             "".to_string(),                   // msg
             self.ref_exchange_account.clone(),
