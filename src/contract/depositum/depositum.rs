@@ -152,7 +152,7 @@ impl Depositum {
         require!(amount.0 > 0, "Empty amount");
         log!("deposit_update");
         let mut account = self.account.get(&beneficiary.clone()).expect("account not found");
-        
+
         let deposit = match account.get(coin) {
             None => amount.0,
             Some(deposit) => deposit.checked_sub(amount.0).expect("Error update deposit"),
@@ -242,11 +242,10 @@ impl Depositum {
             .create_account()
             .deploy_contract(STRATEGY_CODE.to_vec())
             .transfer(amount)
-            .add_full_access_key(env::signer_account_pk())
             .function_call(
                 "new".to_string(),
                 near_sdk::serde_json::to_vec(&StrategyArgs {
-                    executor: AccountId::new_unchecked(lockup_account_id.clone()),
+                    executor: env::predecessor_account_id(),
                     ref_farming_account: AccountId::new_unchecked(
                         "ref-farming-aromankov.testnet".to_string(),
                     ),
@@ -328,7 +327,7 @@ impl Depositum {
                 gas_for_next_callback
             );
             log!("callback_ft_transfer_call, used_gas {:?}", env::used_gas());
-        
+
             let coin = AccountId::new_unchecked("wrap_near-aromankov.testnet".to_string());
 
             self.deposit_subtract(&coin, &account_id, amount);
@@ -338,7 +337,7 @@ impl Depositum {
                 coin,
                 amount,
                 sub_account_id,
-                NO_DEPOSIT, 
+                NO_DEPOSIT,
                 gas_for_next_callback,
             );
         } else {
