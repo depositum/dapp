@@ -1,11 +1,12 @@
 use std::cmp::min;
 use uint::construct_uint;
-use near_sdk::{Balance};
+use near_sdk::{Balance, Gas};
 construct_uint! {
     /// 256-bit unsigned integer.
     pub struct U256(4);
 }
 
+const TGAS_DIVIDER: u64 = 1_000_000_000_000;
 
 fn main() {
     let amounts = vec![445236146982962_u128, 48009037553277982350_u128];
@@ -25,6 +26,8 @@ fn main() {
     
 
     println!("test: {:?}", fair_supply.as_u128());
+
+    println!("gas: {:?}", Gas(628361295471) / TGAS_DIVIDER);
     // println!("max_value: {:?}", U256::max_value().as_u128());
 }
 //        4800905168714284753
