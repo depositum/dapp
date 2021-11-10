@@ -3,17 +3,17 @@ use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::Vector;
 use near_sdk::json_types::U128;
 use near_sdk::json_types::U64;
+use near_sdk::log;
 use near_sdk::near_bindgen;
 use near_sdk::require;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::AccountId;
 use near_sdk::BorshStorageKey;
 use near_sdk::PanicOnDefault;
+use near_sdk::Promise;
 use near_sdk::{env, PromiseOrValue};
 use near_sdk::{ext_contract, Gas, PromiseResult};
-use near_sdk::{log};
 use std::collections::HashMap;
-use near_sdk::{Promise};
 use uint::construct_uint;
 
 construct_uint! {
@@ -23,16 +23,17 @@ construct_uint! {
 
 const RESERVE_TGAS: Gas = Gas(15_000_000_000_000);
 const FT_TRANSFER_GAS: Gas = Gas(35_000_000_000_000);
-const WITHDRAW_SEEDS_GAS: Gas = Gas(54_000_000_000_000);
+const WITHDRAW_SEEDS_GAS: Gas = Gas(60_000_000_000_000);
 const THIRTY_TGAS: Gas = Gas(30_000_000_000_000);
 const SWAP_TGAS: Gas = Gas(10_000_000_000_000);
 const WITHDRAW_FROM_REF_EXACHNGE_TGAS: Gas = Gas(50_000_000_000_000);
+const WITHDRAW_REWARD_TGAS: Gas = Gas(50_000_000_000_000);
 const MFT_TRANSFER_AND_CALL_TGAS: Gas = Gas(60_000_000_000_000);
 const TWENTY_TGAS: Gas = Gas(20_000_000_000_000);
 const TEN_TGAS: Gas = Gas(10_000_000_000_000);
 const GET_DATA_TGAS: Gas = Gas(3_000_000_000_000);
 const FEE_DIVISOR: u32 = 10_000;
-// const STORAGE_DEPOSIT_NEARS: u128 = 1_250_000_000_000_000_000_000;
+const FT_STORAGE_DEPOSIT_NEARS: u128 = 1_250_000_000_000_000_000_000;
 const STORAGE_DEPOSIT_NEARS: u128 = 250_000_000_000_000_000_000_000;
 const TGAS_DIVIDER: u64 = 1_000_000_000_000;
 
@@ -95,8 +96,16 @@ pub trait RefFinancePostActions {
     fn callback_remove_liquidity(&mut self);
     fn callback_get_balances_after_remove_liquidity(&mut self);
     fn callback_withdraw_swap(&mut self);
-    fn callback_get_balances_after_swap(&mut self);
-    fn callback_withdraw_after_withdraw(&mut self, withdraw_amount: U128);
+    fn callback_get_balances_after_swap(&mut self, farmer_account_id: AccountId);
+    fn callback_withdraw_after_withdraw(
+        &mut self,
+        withdraw_amount: U128,
+        farmer_account_id: AccountId,
+    );
+    fn callback_withdraw_reward(&mut self, reward_amount: U128);
+    fn callback_get_reward(&mut self);
+    fn callback_ft_storage_deposit(&mut self, reward_amount: U128);
+    fn callback_before_delete(&mut self, account_to_delete: AccountId);
 }
 
 #[ext_contract(ft_token)]
@@ -107,6 +116,11 @@ pub trait FtToken {
         amount: U128,
         msg: String,
     ) -> PromiseOrValue<U128>;
+    fn storage_deposit(
+        &mut self,
+        account_id: AccountId,
+        registration_only: Option<bool>,
+    ) -> StorageBalance;
 }
 
 #[ext_contract(ref_exchange)]
@@ -137,7 +151,14 @@ pub trait ExtRefExchane {
 #[ext_contract(ref_farming)]
 pub trait ExtRefFarming {
     fn list_user_seeds(&self, account_id: AccountId) -> HashMap<SeedId, U128>;
+    fn get_reward(&self, account_id: AccountId, token_id: AccountId) -> U128;
     fn withdraw_seed(&self, seed_id: SeedId, amount: U128, msg: String);
+    fn withdraw_reward(&self, token_id: AccountId);
+}
+
+#[ext_contract(depositium)]
+pub trait ExtRefFarming {
+    fn on_delete(&self, accound_sub_id: AccountId);
 }
 
 #[derive(BorshStorageKey, BorshSerialize)]
@@ -190,8 +211,27 @@ impl RefFarmingStrategy {
             self.executor == env::predecessor_account_id(),
             "Need permission"
         );
-        Promise::new(env::current_account_id()).delete_account(env::predecessor_account_id())
+
+        let gas_for_next_callback = env::prepaid_gas() - env::used_gas() - TEN_TGAS - RESERVE_TGAS;
+
+        depositium::on_delete(
+            env::current_account_id(),
+            AccountId::new_unchecked("dev-1636561943086-95480970246195".to_string()),
+            0,
+            TEN_TGAS,
+        ).then(ext_self::callback_before_delete(
+            env::predecessor_account_id(),
+            env::current_account_id(),
+            0,
+            gas_for_next_callback
+        ))       
     }
+
+    #[private]
+    pub fn callback_before_delete(&mut self, account_to_delete: AccountId) {
+        Promise::new(env::current_account_id()).delete_account(account_to_delete);
+    }
+
 
     /*
      1. добавить проверку токен, убедиться что мы поддерживаем и знаем как работать с этим токеном
@@ -296,6 +336,8 @@ impl RefFarmingStrategy {
     }
 
     pub fn redeem(&self) {
+        let farmer_account_id = env::predecessor_account_id();
+
         let gas_for_next_callback =
             env::prepaid_gas() - env::used_gas() - GET_DATA_TGAS - RESERVE_TGAS;
 
@@ -316,6 +358,7 @@ impl RefFarmingStrategy {
             GET_DATA_TGAS,
         )
         .then(ext_self::callback_get_balances_after_swap(
+            farmer_account_id,
             env::current_account_id(),
             0,
             gas_for_next_callback,
@@ -558,29 +601,157 @@ impl RefFarmingStrategy {
 
     #[private]
     pub fn callback_withdraw_swap(&mut self) {
-
         let is_success = match env::promise_result(0) {
             PromiseResult::NotReady => unreachable!(),
             PromiseResult::Successful(_value) => true,
             PromiseResult::Failed => false,
         };
-        log!("step 7, used_gas {:?}", env::used_gas());
-        log!(
-            "step 7, prepaid_gas {:?}",
-            env::prepaid_gas() / TGAS_DIVIDER
-        );
-
         if is_success {
-            log!("step 7, successfull swap");
+            log!(
+                "step 7, swap successfull, gas left: {:?}",
+                env::prepaid_gas() / TGAS_DIVIDER
+            );
         } else {
             log!("step 7, swap not successfull");
         }
-        
-        
+    }
+
+    pub fn withdraw_reward(&self) {
+        let gas_for_next_callback =
+            env::prepaid_gas() - env::used_gas() - GET_DATA_TGAS - RESERVE_TGAS;
+
+        log!("withdraw_reward step 1, used_gas {:?}", env::used_gas());
+        log!(
+            "withdraw_reward step 1, prepaid gas {:?}",
+            env::prepaid_gas() / TGAS_DIVIDER
+        );
+        log!(
+            "withdraw_reward step 1, gas_for_next_callback: {:?}",
+            gas_for_next_callback / TGAS_DIVIDER
+        );
+
+        let token_id = AccountId::new_unchecked("usdc-aromankov.testnet".to_string());
+
+        ref_farming::get_reward(
+            env::current_account_id(),
+            token_id,
+            self.ref_farming_account.clone(),
+            0,
+            GET_DATA_TGAS,
+        )
+        .then(ext_self::callback_get_reward(
+            env::current_account_id(),
+            0,
+            gas_for_next_callback, // todo replace with a proper const
+        ));
     }
 
     #[private]
-    pub fn callback_get_balances_after_swap(&mut self) {
+    pub fn callback_get_reward(&mut self) {
+        let reward_amount: U128 = match env::promise_result(0) {
+            PromiseResult::NotReady => unreachable!(),
+            PromiseResult::Successful(reward_amount) => {
+                if let Ok(reward_amount) = near_sdk::serde_json::from_slice::<U128>(&reward_amount)
+                {
+                    reward_amount
+                } else {
+                    U128(0)
+                }
+            }
+            PromiseResult::Failed => U128(0),
+        };
+
+        let gas_for_next_callback =
+            env::prepaid_gas() - env::used_gas() - THIRTY_TGAS - RESERVE_TGAS;
+
+        log!("withdraw_reward step 2, used_gas {:?}", env::used_gas());
+        log!(
+            "withdraw_reward step 2, prepaid_gas {:?}",
+            env::prepaid_gas() / TGAS_DIVIDER
+        );
+        log!(
+            "withdraw_reward step 2, gas_for_next_callback: {:?}",
+            gas_for_next_callback / TGAS_DIVIDER
+        );
+
+        if reward_amount.0 > 0 {
+            let token_id = AccountId::new_unchecked("usdc-aromankov.testnet".to_string());
+
+            ft_token::storage_deposit(
+                env::current_account_id(),
+                None,
+                token_id,
+                FT_STORAGE_DEPOSIT_NEARS,
+                THIRTY_TGAS,
+            )
+            .then(ext_self::callback_withdraw_reward(
+                reward_amount,
+                env::current_account_id(),
+                0,
+                gas_for_next_callback,
+            ));
+        }
+    }
+
+    #[private]
+    pub fn callback_withdraw_reward(&mut self, reward_amount: U128) {
+        let gas_for_next_callback =
+            env::prepaid_gas() - env::used_gas() - WITHDRAW_REWARD_TGAS - RESERVE_TGAS;
+
+        log!("withdraw_reward step 3, used_gas {:?}", env::used_gas());
+        log!(
+            "withdraw_reward step 3, prepaid_gas {:?}",
+            env::prepaid_gas() / TGAS_DIVIDER
+        );
+
+        log!(
+            "withdraw_reward step 3, gas_for_next_callback: {:?}",
+            gas_for_next_callback / TGAS_DIVIDER
+        );
+        let token_id = AccountId::new_unchecked("usdc-aromankov.testnet".to_string());
+
+       
+        ref_farming::withdraw_reward(
+            token_id,
+            self.ref_farming_account.clone(),
+            1,
+            WITHDRAW_REWARD_TGAS,
+        )
+        .then(ext_self::callback_ft_storage_deposit(
+            reward_amount,
+            env::current_account_id(),
+            0,
+            gas_for_next_callback,
+        ));
+    }
+
+    #[private]
+    pub fn callback_ft_storage_deposit(&mut self, reward_amount: U128) {
+        let token_id = AccountId::new_unchecked("usdc-aromankov.testnet".to_string());
+
+        log!("withdraw_reward step 4, used_gas {:?}", env::used_gas());
+        log!(
+            "withdraw_reward step 4, prepaid_gas {:?}",
+            env::prepaid_gas() / TGAS_DIVIDER
+        );
+
+        log!(
+            "withdraw_reward step 4, gas_for_next_callback: {:?}",
+            env::prepaid_gas() / TGAS_DIVIDER
+        );
+
+        ft_token::ft_transfer_call(
+            self.ref_exchange_account.clone(),
+            reward_amount,
+            "".to_string(),
+            token_id,
+            1, // todo create constant
+            env::prepaid_gas() - RESERVE_TGAS,
+        );
+    }
+
+    #[private]
+    pub fn callback_get_balances_after_swap(&mut self, farmer_account_id: AccountId) {
         let balance_by_token: Option<HashMap<AccountId, U128>> = match env::promise_result(0) {
             PromiseResult::NotReady => unreachable!(),
             PromiseResult::Successful(value) => {
@@ -626,6 +797,7 @@ impl RefFarmingStrategy {
                 )
                 .then(ext_self::callback_withdraw_after_withdraw(
                     wnear_balance.clone(),
+                    farmer_account_id,
                     env::current_account_id(),
                     0,
                     gas_for_next_callback, // todo replace with a proper const
@@ -638,7 +810,11 @@ impl RefFarmingStrategy {
     }
 
     #[private]
-    pub fn callback_withdraw_after_withdraw(&mut self, withdraw_amount: U128) {
+    pub fn callback_withdraw_after_withdraw(
+        &mut self,
+        withdraw_amount: U128,
+        farmer_account_id: AccountId,
+    ) {
         let token_id = AccountId::new_unchecked("wrap_near-aromankov.testnet".to_string());
 
         log!("redeem step 3, used_gas {:?}", env::used_gas());
@@ -648,9 +824,9 @@ impl RefFarmingStrategy {
         );
         let gas_for_next_callback = env::prepaid_gas() - RESERVE_TGAS;
         ft_token::ft_transfer_call(
-            AccountId::new_unchecked("dev-1635790864486-82226254893063".to_string()),
+            AccountId::new_unchecked("dev-1636561943086-95480970246195".to_string()),
             withdraw_amount.clone(),
-            "".to_string(),
+            farmer_account_id.to_string(),
             token_id,
             1, // todo create constant
             gas_for_next_callback,
@@ -886,7 +1062,7 @@ impl RefFarmingStrategy {
         let pool_id = 2; // todo get proper pool id
         ref_exchange::add_liquidity(
             env::current_account_id(),
-            vec![amount_in, swapped_amount],
+            vec![swapped_amount, amount_in],
             pool_id,
             self.ref_exchange_account.clone(),
             STORAGE_DEPOSIT_NEARS,
