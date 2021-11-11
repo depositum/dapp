@@ -336,7 +336,8 @@ impl Depositum {
     }
 
     pub fn on_delete(&mut self, accound_sub_id: AccountId) {
-        self.strategy_deposit.insert(&accound_sub_id.clone(), &U128(0));
+        self.strategy_deposit
+            .insert(&accound_sub_id.clone(), &U128(0));
     }
 
     #[payable]
@@ -468,8 +469,7 @@ impl FungibleTokenReceiver for Depositum {
         let receiver: AccountId = if msg.len() > 0 {
             let sub_acc_id = AccountId::new_unchecked(msg.clone());
 
-            self.strategy_deposit
-                .insert(&sub_acc_id.clone(), &U128(0));
+            self.strategy_deposit.insert(&sub_acc_id.clone(), &U128(0));
 
             sub_acc_id
         } else {

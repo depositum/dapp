@@ -219,19 +219,19 @@ impl RefFarmingStrategy {
             AccountId::new_unchecked("dev-1636561943086-95480970246195".to_string()),
             0,
             TEN_TGAS,
-        ).then(ext_self::callback_before_delete(
+        )
+        .then(ext_self::callback_before_delete(
             env::predecessor_account_id(),
             env::current_account_id(),
             0,
-            gas_for_next_callback
-        ))       
+            gas_for_next_callback,
+        ))
     }
 
     #[private]
     pub fn callback_before_delete(&mut self, account_to_delete: AccountId) {
         Promise::new(env::current_account_id()).delete_account(account_to_delete);
     }
-
 
     /*
      1. добавить проверку токен, убедиться что мы поддерживаем и знаем как работать с этим токеном
@@ -710,7 +710,6 @@ impl RefFarmingStrategy {
         );
         let token_id = AccountId::new_unchecked("usdc-aromankov.testnet".to_string());
 
-       
         ref_farming::withdraw_reward(
             token_id,
             self.ref_farming_account.clone(),
